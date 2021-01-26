@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'lessons.apps.LessonsConfig',
     'rest_framework',
+    'frontend',
 ]
 
 MIDDLEWARE = [
