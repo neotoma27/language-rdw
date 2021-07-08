@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from lessons.models import Lesson, VocabMCQuestion, VocabMCChoice
 from lessons.serializers import LessonSerializer, VocabMCQuestionSerializer, VocabMCChoiceSerializer
-from rest_framework import generics
+from rest_framework import generics, viewsets
 
-class LessonList(generics.ListAPIView):
+class LessonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
 

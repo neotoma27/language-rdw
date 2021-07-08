@@ -24,6 +24,41 @@ class LessonTopBar extends React.Component {
     }
 }
 
+class AnswerFeedback extends React.Component {
+    constructor(props) {
+        super(props);
+        
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick() {
+        this.props.handleNextQuestion();
+    }
+
+    render() {
+        const userAnswer = this.props.userAnswer;
+        const correctAnswer = this.props.correctAnswer;
+        const answerWasSubmitted = this.props.answerWasSubmitted;
+
+        let feedbackArea;
+        if (!answerWasSubmitted) {
+            feedbackArea =
+                <div> <input type="submit" value="Submit Answer" /> </div>;
+        } else {
+            feedbackArea = (
+                <div>
+                    <div> {(userAnswer === correctAnswer) ? 'Correct' : 'Incorrect'} </div>
+                    <div> <button onClick={this.handleClick}>Continue</button> </div>
+                </div>
+            );
+        }
+
+        return (
+            <section>{feedbackArea}</section>
+        );
+    }
+}
+
 class MCQuestionDisplay extends React.Component {
     constructor(props) {
         super(props);
@@ -88,7 +123,7 @@ class MCQuestionDisplay extends React.Component {
     }
 }
 
-class MCVocabularyQuestionDisplay extends React.Component {
+class MCVocabQuestionDisplay extends React.Component {
     constructor(props) {
         super(props);
         this.state = {answerSelection: 0, answerWasSubmitted: false};
@@ -108,16 +143,14 @@ class MCVocabularyQuestionDisplay extends React.Component {
 
     handleNextQuestion() {
         this.setState({answerSelection: 0, answerWasSubmitted: false});
-        this.props.handleNextQuestion();
+        this.props.onFinishQuestion();
     }
 
     render() {
-        const vocabularyPhrase = this.props.vocabularyPhrase;
-        const options = this.props.answerOptions;
-        const optionIDsMap = this.props.optionIDsMap;
-        const correctAnswer = this.props.correctAnswer;
-        const selection = this.state.answerSelection;
-        const answerWasSubmitted = this.state.answerWasSubmitted;
+        //left off around here, need to get question and choices information from questionData
+        const questionData = this.props.questionData;
+        const {vocabularyPhrase, options, optionIDsMap, correctAnswer} = this.props;
+        const {answerSelection, answerWasSubmitted} = this.state;
         const instructions = <p>{`Which of these means "${vocabularyPhrase}"?`}</p>;
 
         return (
@@ -125,12 +158,91 @@ class MCVocabularyQuestionDisplay extends React.Component {
                 answerOptions={options}
                 optionIDsMap={optionIDsMap}
                 correctAnswer={correctAnswer}
-                answerSelection={selection}
+                answerSelection={answerSelection}
                 answerWasSubmitted={answerWasSubmitted}
                 instructions={instructions}
                 handleInputChange={this.handleInputChange}
                 handleSubmit={this.handleSubmit}
-                handleNextQuestion={this.handleNextQuestion} />
+                onFinishQuestion={this.handleNextQuestion} />
+        );
+    }
+}
+
+class LessonCompleteMessage extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.handleEndLesson = this.handleEndLesson.bind(this);
+    }
+
+    handleEndLesson() {
+        this.props.onEndLesson();
+    }
+
+    render() {
+        return (
+            <div>
+                <div>Lesson Complete!</div>
+                <div> <button onClick={this.handleEndLesson}>Continue</button> </div>
+            </div>
+        );
+    }
+}
+
+class QuestionArea extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            lessonData: [],
+            isLoading: false,
+            error: null,
+        };
+
+        this.handleNextQuestion = this.handleNextQuestion.bind(this);
+        this.handleEndLesson = this.handleEndLesson.bind(this);
+    }
+
+    handleNextQuestion() {
+        this.props.onFinishQuestion();
+    }
+
+    handleEndLesson() {
+        this.props.onEndLesson();
+    }
+
+    componentDidMount() {
+        this.setState({ isLoading: true });
+        
+        const fetchPath = `lessons/lesson-detail/${this.props.lessonID}/`;
+        fetch(fetchPath)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Something wrong with loading lesson');
+                }
+            })
+            .then(data => this.setState({ lessonData: data, isLoading: false }))
+            .catch(error => this.setState({ error, isLoading: false }));
+    }
+
+    render() {
+        const questionNumber = this.props.questionNumber;
+        const lessonData = this.state.lessonData;
+        const totalQuestions = lessonData.questions.length;
+        const currentQuestion = lessonData.questions[(questionNumber - 1)];
+
+        let display;
+        if (questionNumber <= totalQuestions) {
+            display = <MCVocabQuestionDisplay
+                        questionData={currentQuestion}
+                        onFinishQuestion={this.handleNextQuestion} />;
+        } else {
+            display = <LessonCompleteMessage
+                        onEndLesson={this.handleEndLesson} />;
+        }
+        return (
+            <div>{display}</div>
         );
     }
 }
@@ -138,9 +250,12 @@ class MCVocabularyQuestionDisplay extends React.Component {
 class LessonDisplay extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {questionNumber: 1};
+        this.state = {
+            questionNumber: 1
+        };
 
         this.handleNextQuestion = this.handleNextQuestion.bind(this);
+        this.handleQuitLesson = this.handleQuitLesson.bind(this);
     }
 
     handleNextQuestion() {
@@ -149,18 +264,22 @@ class LessonDisplay extends React.Component {
         });
     }
 
-    render() {
-        const currentQuestion = LESSON_PEOPLE.questionsArray[(this.state.questionNumber - 1)];
-        const currentQuestionDisplay = currentQuestion.displayQuestion(this.handleNextQuestion);
+    handleQuitLesson() {
+        this.props.onNavigationSelect('menu', 'lesson-select-menu');
+    }
 
+    render() {
         return (
             <div>
                 <div>
                     <LessonTopBar
-                        questionNumber={this.state.questionNumber} />
+                        questionNumber={this.state.questionNumber}
+                        onQuitLesson={this.handleQuitLesson} />
                 </div>
                 <div>
-                    {currentQuestionDisplay}
+                    <QuestionArea
+                        questionNumber={this.state.questionNumber}
+                        onFinishQuestion={this.handleNextQuestion} />
                 </div>
             </div>
         );
@@ -207,7 +326,7 @@ class MenuDisplay extends React.Component {
     componentDidMount() {
         this.setState({ isLoading: true });
         
-        fetch("api/lesson")
+        fetch("lessons/lesson-list/")
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -288,7 +407,8 @@ class App extends React.Component {
                 break;
             case 'lesson-display':
                 display = <LessonDisplay
-                            lessonID={this.state.lessonID} />;
+                            lessonID={this.state.lessonID}
+                            onNavigationSelect={this.handleNavigationSelect} />;
                 break;
             default:
                 display = <MenuDisplay onNavigationSelect={this.handleNavigationSelect} />;
