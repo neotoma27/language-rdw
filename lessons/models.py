@@ -1,33 +1,51 @@
 from django.db import models
+from django.db.models.fields.related import ManyToManyField
+
+class Subject(models.Model):
+    pass
+
+class QuestionBase(models.Model):
+    difficulty = models.SmallIntegerField
+
+    class QuestionLanguage(models.TextChoices):
+        FRENCH = 'FRE'
+        SPANISH = 'ESP'
+        CHINESE = 'ZHO'
+
+    question_language = models.CharField(
+        max_length=3,
+        choices=QuestionLanguage.choices,
+        blank=False,
+    )
+    
+    subjects = models.ManyToManyField(Subject)
+
+    class Meta:
+        abstract = True
 
 class Lesson(models.Model):
-    subject = models.CharField(max_length=30)
+    subjects = models.ManyToManyField(Subject)
+    questions = models.ManyToManyField(QuestionBase)
 
-class VocabMCQuestion(models.Model):
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='question_set')
+class VocabMCQuestion(QuestionBase):
     vocab_word = models.CharField(max_length=40)
-    correct_choice = models.PositiveIntegerField()
-    question_number = models.PositiveIntegerField()
+    correct_answer = models.CharField(max_length=40)
+    incorrect_answer_options = models.JSONField()
 
-    def save(self, *args, **kwargs):
-        if self.pk == None:
-            self.question_number = VocabMCQuestion.objects \
-                .filter(lesson=self.lesson) \
-                .aggregate(max_number=Max("question_number")) \
-                .get("max_number",0) + 1
+class SentenceMCQuestion(QuestionBase):
+    native_language_sentence = models.CharField(max_length=100)
+    correct_answer = models.CharField(max_length=100)
+    incorrect_answer_options = models.JSONField()
 
-        super().save(*args, **kwargs)
+class WriteSentenceQuestion(QuestionBase):
+    native_language_sentence = models.CharField(max_length=100)
+    correct_answer = models.CharField(max_length=100)
 
-class VocabMCChoice(models.Model):
-    question = models.ForeignKey(VocabMCQuestion, on_delete=models.CASCADE, related_name='choice_set')
-    word_choice = models.CharField(max_length=40)
-    choice_number = models.PositiveIntegerField()
+class TranslatePickWordsQuestion(QuestionBase):
+    native_language_sentence = models.CharField(max_length=100)
+    correct_answer = models.CharField(max_length=100)
+    word_options = models.JSONField()
 
-    def save(self, *args, **kwargs):
-        if self.pk == None:
-            self.choice_number = VocabMCChoice.objects \
-                .filter(question=self.question) \
-                .aggregate(max_number=Max("choice_number")) \
-                .get("max_number",0) + 1
-
-        super().save(*args, **kwargs)
+class PairsQuestion(QuestionBase):
+    mixed = models.BooleanField(default=False)
+    word_pairs = models.JSONField()
