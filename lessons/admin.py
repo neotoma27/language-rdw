@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models import (Subject, QuestionBase, Lesson, VocabMCQuestion, SentenceMCQuestion, WriteSentenceQuestion,
+    TranslatePickWordsQuestion, PairsQuestion)
 
-# Register your models here.
+@admin.register(Subject, QuestionBase, Lesson, VocabMCQuestion, SentenceMCQuestion, WriteSentenceQuestion,
+    TranslatePickWordsQuestion, PairsQuestion)
+class LessonsAdmin(admin.ModelAdmin):
+    pass

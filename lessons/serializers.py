@@ -35,7 +35,8 @@ class WriteSentenceQuestionSerializer(QuestionBaseSerializer):
 class TranslatePickWordsQuestionSerializer(QuestionBaseSerializer):
     class Meta:
         model=TranslatePickWordsQuestion
-        fields = ['id', 'difficulty', 'question_language', 'subjects', 'native_language_sentence', 'correct_answer', 'word_options']
+        fields = ['id', 'difficulty', 'question_language', 'subjects', 'native_language_sentence', 'correct_answer',
+            'incorrect_words']
 
 class PairsQuestionSerializer(QuestionBaseSerializer):
     class Meta:
