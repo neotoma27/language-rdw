@@ -1,6 +1,49 @@
 import React, { Component } from "react";
 import ReactDOM, { render } from "react-dom";
 
+function withFetching(WrappedComponent, url, errorMessage) {
+    return class extends React.Component {
+        constructor(props) {
+            super(props);
+
+            this.state = {
+                data: null,
+                isLoading: false,
+                error: null,
+            };
+        }
+
+        componentDidMount() {
+            this.setState({ isLoading: true });
+
+            fetch(url)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(errorMessage);
+                }
+            })
+            .then(data => this.setState({ data, isLoading: false }))
+            .catch(error => this.setState({ error, isLoading: false }));
+        }
+
+        render() {
+            const { isLoading, error } = this.state;
+            
+            if (error) {
+                return <p>{error.message}</p>;
+            }
+
+            if (isLoading) {
+                return <p>Loading...</p>;
+            }
+
+            return <WrappedComponent fetchedData={this.state.data} { ...this.props } />;
+        }
+    };
+}
+
 class LessonTopBar extends React.Component {
     constructor(props) {
         super(props);
@@ -126,7 +169,7 @@ class MCQuestionDisplay extends React.Component {
 class MCVocabQuestionDisplay extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {answerSelection: 0, answerWasSubmitted: false};
+        this.state = {correctAnswerNumber: 1, answerSelection: 0, answerWasSubmitted: false};
 
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -148,9 +191,11 @@ class MCVocabQuestionDisplay extends React.Component {
 
     render() {
         //left off around here, need to get question and choices information from questionData
+        //add random question order while keeping track of where correct answer is later
         const questionData = this.props.questionData;
-        const {vocabularyPhrase, options, optionIDsMap, correctAnswer} = this.props;
-        const {answerSelection, answerWasSubmitted} = this.state;
+
+        //const {vocabularyPhrase, options, optionIDsMap} = this.props;
+        const {correctAnswerNumber, answerSelection, answerWasSubmitted} = this.state;
         const instructions = <p>{`Which of these means "${vocabularyPhrase}"?`}</p>;
 
         return (
@@ -192,11 +237,6 @@ class LessonCompleteMessage extends React.Component {
 class QuestionArea extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            lessonData: [],
-            isLoading: false,
-            error: null,
-        };
 
         this.handleNextQuestion = this.handleNextQuestion.bind(this);
         this.handleEndLesson = this.handleEndLesson.bind(this);
@@ -210,39 +250,16 @@ class QuestionArea extends React.Component {
         this.props.onEndLesson();
     }
 
-    componentDidMount() {
-        this.setState({ isLoading: true });
-        
-        const fetchPath = `lessons/lesson-detail/${this.props.lessonID}/`;
-        fetch(fetchPath)
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('Something wrong with loading lesson');
-                }
-            })
-            .then(data => this.setState({ lessonData: data, isLoading: false }))
-            .catch(error => this.setState({ error, isLoading: false }));
-    }
-
     render() {
-        const questionNumber = this.props.questionNumber;
-        const lessonData = this.state.lessonData;
-        const totalQuestions = lessonData.questions.length;
-        const currentQuestion = lessonData.questions[(questionNumber - 1)];
+        const questionData = this.props.data;
+        //left off here mon dec 27
 
-        let display;
-        if (questionNumber <= totalQuestions) {
-            display = <MCVocabQuestionDisplay
-                        questionData={currentQuestion}
-                        onFinishQuestion={this.handleNextQuestion} />;
-        } else {
-            display = <LessonCompleteMessage
-                        onEndLesson={this.handleEndLesson} />;
-        }
         return (
-            <div>{display}</div>
+            <div>
+                <MCVocabQuestionDisplay
+                    questionData={questionData}
+                    onFinishQuestion={this.handleNextQuestion} />
+            </div>
         );
     }
 }
@@ -269,17 +286,31 @@ class LessonDisplay extends React.Component {
     }
 
     render() {
+        const lessonData = this.props.data;
+        const questionNumber = this.state.questionNumber;
+        const totalQuestions = lessonData.questions.length;
+
+        let mainArea;
+        if (questionNumber <= totalQuestions) {
+            const questionURL = lessonData.questions[questionNumber];
+            const errorMessage = 'Something wrong with loading question';
+            const QuestionAreaWithFetching = withFetching(QuestionArea, questionURL, errorMessage);
+            mainArea = <QuestionAreaWithFetching
+                            onFinishQuestion={this.handleNextQuestion} />
+        } else {
+            mainArea = <LessonCompleteMessage
+                        onEndLesson={this.handleQuitLesson} />;
+        }
+
         return (
             <div>
                 <div>
                     <LessonTopBar
-                        questionNumber={this.state.questionNumber}
+                        questionNumber={questionNumber}
                         onQuitLesson={this.handleQuitLesson} />
                 </div>
                 <div>
-                    <QuestionArea
-                        questionNumber={this.state.questionNumber}
-                        onFinishQuestion={this.handleNextQuestion} />
+                    {mainArea}
                 </div>
             </div>
         );
@@ -406,8 +437,11 @@ class App extends React.Component {
                 display = <MenuDisplay onNavigationSelect={this.handleNavigationSelect} />;
                 break;
             case 'lesson-display':
-                display = <LessonDisplay
-                            lessonID={this.state.lessonID}
+                const url = `lessons/lesson-detail/${this.state.lessonID}/`;
+                const errorMessage = 'Something wrong with loading lesson';
+                const LessonDisplayWithFetching = withFetching(LessonDisplay, url, errorMessage);
+
+                display = <LessonDisplayWithFetching
                             onNavigationSelect={this.handleNavigationSelect} />;
                 break;
             default:

@@ -3,18 +3,17 @@ from lessons.models import (QuestionBase, Lesson, VocabMCQuestion, SentenceMCQue
     PairsQuestion)
 
 
-class QuestionBaseSerializer(serializers.ModelSerializer):
+class QuestionBaseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = QuestionBase
         fields = ['id', 'difficulty', 'question_language', 'subjects']
 
-class LessonSerializer(serializers.ModelSerializer):
-    questions = QuestionBaseSerializer(many=True, read_only=True) #not sure if it's ok to just use the parent class here?
+class LessonSerializer(serializers.HyperlinkedModelSerializer):
+    questions = serializers.HyperlinkedRelatedField(many=True, view_name='question-detail', read_only=True) #not sure if it's ok to just use the parent class here?
 
     class Meta:
         model = Lesson
         fields = ['id', 'subjects', 'questions']
-        depth = 1
 
 class VocabMCQuestionSerializer(QuestionBaseSerializer):
     class Meta:

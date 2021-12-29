@@ -2,12 +2,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 import jsonschema
 
-def validate_JSON(value, schema, error_message):
-    try:
-        jsonschema.validate(value, schema)
-    except jsonschema.exceptions.ValidationError:
-        raise ValidationError(error_message)
-
 MC_OPTIONS_JSON_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Incorrect Options for Multiple-Choice Question",
@@ -22,7 +16,7 @@ MC_OPTIONS_JSON_SCHEMA = {
             },
             "minItems": 3,
             "maxItems": 3,
-            "uniqueItems": true
+            "uniqueItems": True
         }
     },
     "required": [ "options" ]
@@ -42,7 +36,7 @@ PICK_WORDS_INCORRECT_JSON_SCHEMA = {
             },
             "minItems": 2,
             "maxItems": 9,
-            "uniqueItems": true
+            "uniqueItems": True
         }
     },
     "required": [ "words" ]
@@ -62,7 +56,7 @@ WORD_PAIRS_JSON_SCHEMA = {
             },
             "minItems": 5,
             "maxItems": 5,
-            "uniqueItems": true
+            "uniqueItems": True
         },
         "firstLanguageWords": {
             "description": "The first-language translations of the five target-language vocabulary words",
@@ -72,20 +66,26 @@ WORD_PAIRS_JSON_SCHEMA = {
             },
             "minItems": 5,
             "maxItems": 5,
-            "uniqueItems": true
+            "uniqueItems": True
         }
     },
     "required": [ "targetLanguageWords", "firstLanguageWords" ]
 }
 
-MC_OPTIONS_VALIDATION_ERROR_MESSAGE = ('incorrect_answer_options must be a JSON object with one member whose name is'
+MC_OPTIONS_VALIDATION_ERROR_MESSAGE = ('incorrect_answer_options must be a JSON object with one member whose name is '
     'options and whose value is an array of three strings')
 
-PICK_WORDS_INCORRECT_VALIDATION_ERROR_MESSAGE = ('incorrect_words must be a JSON object with one member whose name is'
+PICK_WORDS_INCORRECT_VALIDATION_ERROR_MESSAGE = ('incorrect_words must be a JSON object with one member whose name is '
     'words and whose value is an array of two to nine strings')
 
-WORD_PAIRS_VALIDATION_ERROR_MESSAGE = ('word_pairs must be a JSON object with two members whose names are targetLanguageWords and'
+WORD_PAIRS_VALIDATION_ERROR_MESSAGE = ('word_pairs must be a JSON object with two members whose names are targetLanguageWords and '
     'firstLanguageWords, and the value for each must be an array with five strings')
+
+def validate_JSON(value, schema, error_message):
+    try:
+        jsonschema.validate(value, schema)
+    except jsonschema.exceptions.ValidationError:
+        raise ValidationError(error_message)
 
 def validate_mc_JSON(options):
     validate_JSON(options, MC_OPTIONS_JSON_SCHEMA, MC_OPTIONS_VALIDATION_ERROR_MESSAGE)
