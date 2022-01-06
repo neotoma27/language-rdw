@@ -17,22 +17,27 @@ function withFetching(WrappedComponent, url, errorMessage) {
             this.setState({ isLoading: true });
 
             fetch(url)
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error(errorMessage);
-                }
-            })
-            .then(data => this.setState({ data, isLoading: false }))
-            .catch(error => this.setState({ error, isLoading: false }));
+                .then(
+                    (result) => {
+                        this.setState({
+                            data: result,
+                            isLoading: false
+                        });
+                    },
+                   (error) => {
+                        this.setState({
+                            isLoading: false,
+                            error
+                        });
+                    }
+                )
         }
 
         render() {
             const { isLoading, error } = this.state;
             
             if (error) {
-                return <p>{error.message}</p>;
+                return <p>{errorMessage}</p>;
             }
 
             if (isLoading) {
@@ -125,12 +130,13 @@ class MCQuestionDisplay extends React.Component {
     }
 
     render() {
-        const options = this.props.answerOptions;
-        const optionIDsMap = this.props.optionIDsMap;
-        const correctAnswer = this.props.correctAnswer;
-        const selection = this.props.answerSelection;
-        const answerWasSubmitted = this.props.answerWasSubmitted;
-        const instructions = this.props.instructions;
+        const {correctAnswer, incorrectAnswerOptions, correctAnswerNumber, answerSelection, answerWasSubmitted,
+                questionPrompt} = this.props;
+
+        let answerOptions = [...incorrectAnswerOptions];
+        answerOptions.splice((correctAnswerNumber - 1), 0, correctAnswer);
+
+        //jan 5 left off here
         const optionItems = options.map((optionText, number) =>
             <li key={optionIDsMap.get(optionText)}>
                 <label>
@@ -169,7 +175,7 @@ class MCQuestionDisplay extends React.Component {
 class MCVocabQuestionDisplay extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {correctAnswerNumber: 1, answerSelection: 0, answerWasSubmitted: false};
+        this.state = {answerSelection: 0, answerWasSubmitted: false};
 
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -190,22 +196,17 @@ class MCVocabQuestionDisplay extends React.Component {
     }
 
     render() {
-        //left off around here, need to get question and choices information from questionData
-        //add random question order while keeping track of where correct answer is later
-        const questionData = this.props.questionData;
-
-        //const {vocabularyPhrase, options, optionIDsMap} = this.props;
-        const {correctAnswerNumber, answerSelection, answerWasSubmitted} = this.state;
-        const instructions = <p>{`Which of these means "${vocabularyPhrase}"?`}</p>;
-
+        const vocabWord = this.props.questionData.vocabWord;
+        const questionPrompt = <p>{`Which of these means "${vocabWord}"?`}</p>;
+        const questionData = (({ correctAnswer, incorrectAnswerOptions, correctAnswerNumber }) =>
+                                ({ correctAnswer, incorrectAnswerOptions, correctAnswerNumber }))(this.props.questionData);
+    
         return (
             <MCQuestionDisplay
-                answerOptions={options}
-                optionIDsMap={optionIDsMap}
-                correctAnswer={correctAnswer}
-                answerSelection={answerSelection}
-                answerWasSubmitted={answerWasSubmitted}
-                instructions={instructions}
+                questionPrompt={questionPrompt}
+                answerSelection={this.state.answerSelection}
+                answerWasSubmitted={this.state.answerWasSubmitted}
+                {...questionData}
                 handleInputChange={this.handleInputChange}
                 handleSubmit={this.handleSubmit}
                 onFinishQuestion={this.handleNextQuestion} />
@@ -251,8 +252,13 @@ class QuestionArea extends React.Component {
     }
 
     render() {
-        const questionData = this.props.data;
-        //left off here mon dec 27
+        const {
+            correct_answer: correctAnswer,
+            incorrect_answer_options: incorrectAnswerOptions,
+            vocab_word: vocabWord
+        } = this.props.fetchedData;
+        const correctAnswerNumber = 1;
+        const questionData = {correctAnswer, incorrectAnswerOptions, vocabWord, correctAnswerNumber};
 
         return (
             <div>
@@ -286,13 +292,13 @@ class LessonDisplay extends React.Component {
     }
 
     render() {
-        const lessonData = this.props.data;
+        const lessonData = this.props.fetchedData;
         const questionNumber = this.state.questionNumber;
         const totalQuestions = lessonData.questions.length;
 
         let mainArea;
         if (questionNumber <= totalQuestions) {
-            const questionURL = lessonData.questions[questionNumber];
+            const questionURL = lessonData.questions[(questionNumber - 1)] + ' Accept:application/json';
             const errorMessage = 'Something wrong with loading question';
             const QuestionAreaWithFetching = withFetching(QuestionArea, questionURL, errorMessage);
             mainArea = <QuestionAreaWithFetching
@@ -437,7 +443,7 @@ class App extends React.Component {
                 display = <MenuDisplay onNavigationSelect={this.handleNavigationSelect} />;
                 break;
             case 'lesson-display':
-                const url = `lessons/lesson-detail/${this.state.lessonID}/`;
+                const url = `lessons/lesson-detail/${this.state.lessonID}.json`;
                 const errorMessage = 'Something wrong with loading lesson';
                 const LessonDisplayWithFetching = withFetching(LessonDisplay, url, errorMessage);
 
