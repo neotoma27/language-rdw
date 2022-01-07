@@ -136,16 +136,15 @@ class MCQuestionDisplay extends React.Component {
         let answerOptions = [...incorrectAnswerOptions];
         answerOptions.splice((correctAnswerNumber - 1), 0, correctAnswer);
 
-        //jan 5 left off here
-        const optionItems = options.map((optionText, number) =>
-            <li key={optionIDsMap.get(optionText)}>
+        const optionItems = answerOptions.map((optionText, number) =>
+            <li key={"key" + optionText}>
                 <label>
                     {optionText}
                     <input
                         type="radio"
                         name="answerOption"
                         value={(number + 1)}
-                        checked={((number + 1) === selection)}
+                        checked={((number + 1) === answerSelection)}
                         onChange={this.handleInputChange} />
                 </label>
             </li>
@@ -154,7 +153,7 @@ class MCQuestionDisplay extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <section>
-                    {instructions}
+                    {questionPrompt}
                     <fieldset>
                         <legend>Select</legend>
                         <ul>
@@ -196,10 +195,8 @@ class MCVocabQuestionDisplay extends React.Component {
     }
 
     render() {
-        const vocabWord = this.props.questionData.vocabWord;
+        const {vocabWord, ...questionData} = this.props;
         const questionPrompt = <p>{`Which of these means "${vocabWord}"?`}</p>;
-        const questionData = (({ correctAnswer, incorrectAnswerOptions, correctAnswerNumber }) =>
-                                ({ correctAnswer, incorrectAnswerOptions, correctAnswerNumber }))(this.props.questionData);
     
         return (
             <MCQuestionDisplay
@@ -257,13 +254,13 @@ class QuestionArea extends React.Component {
             incorrect_answer_options: incorrectAnswerOptions,
             vocab_word: vocabWord
         } = this.props.fetchedData;
-        const correctAnswerNumber = 1;
+        const correctAnswerNumber = 1; //I will make this random later
         const questionData = {correctAnswer, incorrectAnswerOptions, vocabWord, correctAnswerNumber};
 
         return (
             <div>
                 <MCVocabQuestionDisplay
-                    questionData={questionData}
+                    {...questionData}
                     onFinishQuestion={this.handleNextQuestion} />
             </div>
         );
@@ -439,9 +436,6 @@ class App extends React.Component {
         const currentDisplay = this.state.currentDisplay;
         let display;
         switch (currentDisplay) {
-            case 'lesson-select-menu':
-                display = <MenuDisplay onNavigationSelect={this.handleNavigationSelect} />;
-                break;
             case 'lesson-display':
                 const url = `lessons/lesson-detail/${this.state.lessonID}.json`;
                 const errorMessage = 'Something wrong with loading lesson';
@@ -450,8 +444,13 @@ class App extends React.Component {
                 display = <LessonDisplayWithFetching
                             onNavigationSelect={this.handleNavigationSelect} />;
                 break;
+            case 'lesson-select-menu':
             default:
-                display = <MenuDisplay onNavigationSelect={this.handleNavigationSelect} />;
+                const url = 'lessons.json';
+                const errorMessage = 'Something wrong with loading lesson-select menu';
+                const MenuDisplayWithFetching = withFetching(MenuDisplay, url, errorMessage);
+
+                display = <MenuDisplayWithFetching onNavigationSelect={this.handleNavigationSelect} />;
         }
         return (
             <div>{display}</div>

@@ -102,20 +102,22 @@ class Subject(models.Model):
 class QuestionBase(models.Model):
     difficulty = models.SmallIntegerField
 
-    class QuestionLanguage(models.TextChoices):
-        FRENCH = 'FRE'
-        SPANISH = 'ESP'
-        CHINESE = 'ZHO'
+    # class QuestionLanguage(models.TextChoices):
+    #     FRENCH = 'FRE'
+    #     SPANISH = 'ESP'
+    #     CHINESE = 'ZHO'
 
-    question_language = models.CharField(
-        max_length=3,
-        choices=QuestionLanguage.choices,
-        blank=False,
-    )
+    # question_language = models.CharField(
+    #     max_length=3,
+    #     choices=QuestionLanguage.choices,
+    #     blank=False,
+    # )
     
     subjects = models.ManyToManyField(Subject)
 
 class Lesson(models.Model):
+    lesson_ID = models.CharField(max_length=50, primary_key=True)
+    lesson_name = models.CharField(max_length=80, unique=True)
     subjects = models.ManyToManyField(Subject)
     questions = models.ManyToManyField(QuestionBase)
 
