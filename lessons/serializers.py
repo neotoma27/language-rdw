@@ -13,7 +13,7 @@ class LessonSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ['id', 'subjects', 'questions']
+        fields = ['lesson_ID', 'lesson_name', 'subjects', 'questions']
 
 class VocabMCQuestionSerializer(QuestionBaseSerializer):
     class Meta:
