@@ -100,7 +100,7 @@ class Subject(models.Model):
     name = models.CharField(max_length=70, primary_key=True)
 
 class QuestionBase(models.Model):
-    difficulty = models.SmallIntegerField
+    #difficulty = models.SmallIntegerField
 
     # class QuestionLanguage(models.TextChoices):
     #     FRENCH = 'FRE'
@@ -116,7 +116,6 @@ class QuestionBase(models.Model):
     subjects = models.ManyToManyField(Subject)
 
 class Lesson(models.Model):
-    lesson_ID = models.CharField(max_length=50, primary_key=True)
     lesson_name = models.CharField(max_length=80, unique=True)
     subjects = models.ManyToManyField(Subject)
     questions = models.ManyToManyField(QuestionBase)

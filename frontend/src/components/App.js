@@ -84,25 +84,19 @@ class AnswerFeedback extends React.Component {
     }
 
     render() {
-        const userAnswer = this.props.userAnswer;
-        const correctAnswer = this.props.correctAnswer;
-        const answerWasSubmitted = this.props.answerWasSubmitted;
-
-        let feedbackArea;
-        if (!answerWasSubmitted) {
-            feedbackArea =
-                <div> <input type="submit" value="Submit Answer" /> </div>;
-        } else {
-            feedbackArea = (
-                <div>
-                    <div> {(userAnswer === correctAnswer) ? 'Correct' : 'Incorrect'} </div>
-                    <div> <button onClick={this.handleClick}>Continue</button> </div>
-                </div>
-            );
-        }
+        const {correct, correctAnswer} = this.props;
 
         return (
-            <section>{feedbackArea}</section>
+            <section>
+                <div>{correct ? 'Correct' : 'Incorrect'}</div>
+                {(!correct) &&
+                    <div>
+                        <p>Answer:</p>
+                        <p>{correctAnswer}</p>
+                    </div>
+                }
+                <div><button onClick={this.handleClick}>Continue</button></div>
+            </section>
         );
     }
 }
@@ -133,6 +127,8 @@ class MCQuestionDisplay extends React.Component {
         const {correctAnswer, incorrectAnswerOptions, correctAnswerNumber, answerSelection, answerWasSubmitted,
                 questionPrompt} = this.props;
 
+        const correctAnswerWasSubmitted = answerWasSubmitted && (correctAnswerNumber === answerSelection);
+
         let answerOptions = [...incorrectAnswerOptions];
         answerOptions.splice((correctAnswerNumber - 1), 0, correctAnswer);
 
@@ -161,11 +157,19 @@ class MCQuestionDisplay extends React.Component {
                         </ul>
                     </fieldset>
                 </section>
-                <AnswerFeedback
-                    userAnswer={selection}
-                    answerWasSubmitted={answerWasSubmitted}
-                    correctAnswer={correctAnswer}
-                    handleNextQuestion={this.handleNextQuestion} />
+                {!answerWasSubmitted &&
+                    <section>
+                        <p>
+                            <input type="submit" value="Submit Answer" disabled={answerSelection === 0} />
+                        </p>
+                    </section>
+                }
+                {answerWasSubmitted &&
+                    <AnswerFeedback
+                        correct={correctAnswerWasSubmitted}
+                        correctAnswer={correctAnswer}
+                        handleNextQuestion={this.handleNextQuestion} />
+                }
             </form>
         );
     }
@@ -332,11 +336,11 @@ class LessonChoiceRow extends React.Component {
     }
 
     render() {
-        subject = this.props.subject;
+        lesson_name = this.props.lesson_name;
         //prop ID used in handleClickLesson
 
         return (
-            <li><button onClick={this.handleClickLesson}>{subject}</button></li>
+            <li><button onClick={this.handleClickLesson}>{lesson_name}</button></li>
         );
     }
 }
@@ -344,11 +348,6 @@ class LessonChoiceRow extends React.Component {
 class MenuDisplay extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            lessonsData: [],
-            isLoading: false,
-            error: null,
-        };
 
         this.handleNavigationSelect = this.handleNavigationSelect.bind(this);
     }
@@ -357,31 +356,8 @@ class MenuDisplay extends React.Component {
         this.props.onNavigationSelect('lesson', lessonID);
     }
 
-    componentDidMount() {
-        this.setState({ isLoading: true });
-        
-        fetch("lessons/lesson-list/")
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('Something wrong with loading lessons');
-                }
-            })
-            .then(data => this.setState({ lessonsData: data, isLoading: false }))
-            .catch(error => this.setState({ error, isLoading: false }));
-    }
-
     render() {
-        const { lessonsData, isLoading, error } = this.state;
-
-        if (error) {
-            return <p>{error.message}</p>;
-        }
-
-        if (isLoading) {
-            return <p>Loading lessons...</p>;
-        }
+        const lessonsData = this.props.fetchedData;
 
         return (
             <div>
@@ -390,9 +366,9 @@ class MenuDisplay extends React.Component {
                     {lessonsData.map(lesson => {
                         return (
                             <LessonChoiceRow
-                                key={lesson.subject}
+                                key={lesson.lesson_name}
                                 ID={lesson.id}
-                                subject={lesson.subject}
+                                lesson_name={lesson.lesson_name}
                                 onNavigationSelect={this.handleNavigationSelect} />
                         );
                     })}
@@ -437,18 +413,18 @@ class App extends React.Component {
         let display;
         switch (currentDisplay) {
             case 'lesson-display':
-                const url = `lessons/lesson-detail/${this.state.lessonID}.json`;
-                const errorMessage = 'Something wrong with loading lesson';
-                const LessonDisplayWithFetching = withFetching(LessonDisplay, url, errorMessage);
+                const lessonDetailURL = `api/lessons/lesson-detail/${this.state.lessonID}.json`;
+                const lessonErrorMessage = 'Something wrong with loading lesson';
+                const LessonDisplayWithFetching = withFetching(LessonDisplay, lessonDetailURL, lessonErrorMessage);
 
                 display = <LessonDisplayWithFetching
                             onNavigationSelect={this.handleNavigationSelect} />;
                 break;
             case 'lesson-select-menu':
             default:
-                const url = 'lessons.json';
-                const errorMessage = 'Something wrong with loading lesson-select menu';
-                const MenuDisplayWithFetching = withFetching(MenuDisplay, url, errorMessage);
+                const lessonsListURL = 'api/lessons.json';
+                const lessonSelectErrorMessage = 'Something wrong with loading lesson-select menu';
+                const MenuDisplayWithFetching = withFetching(MenuDisplay, lessonsListURL, lessonSelectErrorMessage);
 
                 display = <MenuDisplayWithFetching onNavigationSelect={this.handleNavigationSelect} />;
         }
