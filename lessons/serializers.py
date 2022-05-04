@@ -4,9 +4,11 @@ from lessons.models import (Subject, QuestionBase, Lesson, VocabMCQuestion, Sent
 
 
 class SubjectSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="subject-detail")
+
     class Meta:
         model = Subject
-        fields = ['url', 'id', 'name']
+        fields = ['url', 'name']
 
 class QuestionBaseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -14,33 +16,33 @@ class QuestionBaseSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'subjects']
 
 class LessonSerializer(serializers.HyperlinkedModelSerializer):
-    questions = serializers.HyperlinkedRelatedField(many=True, view_name='question-detail', read_only=True)
+    questions = serializers.HyperlinkedRelatedField(many=True, view_name='questionbase-detail', read_only=True)
 
     class Meta:
         model = Lesson
         fields = ['url', 'id', 'lesson_name', 'subjects', 'questions']
 
-class VocabMCQuestionSerializer(QuestionBaseSerializer):
+class VocabMCQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = VocabMCQuestion
         fields = ['url', 'id', 'subjects', 'vocab_word', 'correct_answer', 'incorrect_answer_options']
 
-class SentenceMCQuestionSerializer(QuestionBaseSerializer):
+class SentenceMCQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model=SentenceMCQuestion
         fields = ['url', 'id', 'subjects', 'native_language_sentence', 'correct_answer', 'incorrect_answer_options']
 
-class WriteSentenceQuestionSerializer(QuestionBaseSerializer):
+class WriteSentenceQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model=WriteSentenceQuestion
         fields = ['url', 'id', 'subjects', 'native_language_sentence', 'correct_answer']
 
-class TranslatePickWordsQuestionSerializer(QuestionBaseSerializer):
+class TranslatePickWordsQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model=TranslatePickWordsQuestion
         fields = ['url', 'id', 'subjects', 'native_language_sentence', 'correct_answer', 'incorrect_words']
 
-class PairsQuestionSerializer(QuestionBaseSerializer):
+class PairsQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model=PairsQuestion
         fields = ['url', 'id', 'subjects', 'mixed', 'word_pairs']

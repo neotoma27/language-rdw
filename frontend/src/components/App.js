@@ -413,7 +413,7 @@ class App extends React.Component {
         let display;
         switch (currentDisplay) {
             case 'lesson-display':
-                const lessonDetailURL = `api/lessons/lesson-detail/${this.state.lessonID}.json`;
+                const lessonDetailURL = `api/lessons//${this.state.lessonID}.json`;
                 const lessonErrorMessage = 'Something wrong with loading lesson';
                 const LessonDisplayWithFetching = withFetching(LessonDisplay, lessonDetailURL, lessonErrorMessage);
 
