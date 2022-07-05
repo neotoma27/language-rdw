@@ -16,7 +16,8 @@ class QuestionBaseSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'subjects']
 
 class LessonSerializer(serializers.HyperlinkedModelSerializer):
-    questions = serializers.HyperlinkedRelatedField(many=True, view_name='questionbase-detail', read_only=True)
+    questions = serializers.HyperlinkedRelatedField(
+        many=True, view_name='questionbase-detail', queryset=QuestionBase.objects.all())
 
     class Meta:
         model = Lesson
