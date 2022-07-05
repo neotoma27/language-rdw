@@ -6,6 +6,7 @@ router = DefaultRouter()
 router.register(r'lessons', views.LessonViewSet)
 router.register(r'questions', views.QuestionBaseViewSet)
 router.register(r'subjects', views.SubjectViewSet)
+router.register(r'vocabmcquestions', views.VocabMCQuestionViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),

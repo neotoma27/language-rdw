@@ -7,7 +7,7 @@ function withFetching(WrappedComponent, url, errorMessage) {
             super(props);
 
             this.state = {
-                data: null,
+                data: [],
                 isLoading: false,
                 error: null,
             };
@@ -20,7 +20,7 @@ function withFetching(WrappedComponent, url, errorMessage) {
                 .then(
                     (result) => {
                         this.setState({
-                            data: result,
+                            data: result.data,
                             isLoading: false
                         });
                     },
@@ -35,7 +35,8 @@ function withFetching(WrappedComponent, url, errorMessage) {
 
         render() {
             const { isLoading, error } = this.state;
-            
+            console.log(JSON.parse(JSON.stringify(data)), isLoading, error);
+
             if (error) {
                 return <p>{errorMessage}</p>;
             }
@@ -358,6 +359,10 @@ class MenuDisplay extends React.Component {
 
     render() {
         const lessonsData = this.props.fetchedData;
+        console.log(JSON.parse(JSON.stringify(lessonsData)));
+
+        if (!lessonsData) return <div>No data loaded yet</div>;
+        if (!lessonsData.length) return <div>Data is empty</div>;
 
         return (
             <div>
@@ -411,9 +416,10 @@ class App extends React.Component {
     render() {
         const currentDisplay = this.state.currentDisplay;
         let display;
+        console.log(currentDisplay);
         switch (currentDisplay) {
             case 'lesson-display':
-                const lessonDetailURL = `api/lessons//${this.state.lessonID}.json`;
+                const lessonDetailURL = `api/lessons/${this.state.lessonID}.json`;
                 const lessonErrorMessage = 'Something wrong with loading lesson';
                 const LessonDisplayWithFetching = withFetching(LessonDisplay, lessonDetailURL, lessonErrorMessage);
 

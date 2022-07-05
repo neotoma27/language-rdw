@@ -26,6 +26,7 @@ class VocabMCQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = VocabMCQuestion
         fields = ['url', 'id', 'subjects', 'vocab_word', 'correct_answer', 'incorrect_answer_options']
+        # extra_kwargs = {'incorrect_answer_options': {'binary': True}}
 
 class SentenceMCQuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
