@@ -1,4 +1,4 @@
-from rest_framework.test import APIRequestFactory, APITestCase
+from rest_framework.test import APITestCase
 from rest_framework import status
 from lessons.models import (Subject, QuestionBase, Lesson, VocabMCQuestion, SentenceMCQuestion,
     WriteSentenceQuestion, TranslatePickWordsQuestion, PairsQuestion)
@@ -37,8 +37,6 @@ class VocabMCQuestionTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VocabMCQuestion.objects.count(), 1)
         self.assertEqual(QuestionBase.objects.count(), 1)
-        # question_expected_full_url = self.client.get('api/vocabmcquestions/1/get_full_url').data
-        # subject_expected_full_url = self.client.get('api/subjects/Animals/get_full_url').data
         question_expected_full_url = self.client.get(reverse('vocabmcquestion-get-full-url', args=[1])).data
         subject_expected_full_url = self.client.get(reverse('subject-get-full-url', args=['Animals'])).data
         expected_data = data.copy()
@@ -50,7 +48,6 @@ class VocabMCQuestionTests(APITestCase):
             }
         )
         self.assertEqual(response.data, expected_data)
-        # self.assertEqual(dict(response.data), expected_data)
 
 class LessonTests(APITestCase):
     def test_create_lesson(self):
@@ -91,7 +88,6 @@ class LessonTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VocabMCQuestion.objects.count(), 2)
         self.assertEqual(QuestionBase.objects.count(), 2)
-        print([reverse('questionbase-detail', args=[1]), reverse('questionbase-detail', args=[2])])
         #then test a lesson POST request
         lessonListUrl = reverse('lesson-list')
         data = {
@@ -105,8 +101,6 @@ class LessonTests(APITestCase):
         response = self.client.post(lessonListUrl, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Lesson.objects.count(), 1)
-        # self.assertEqual(Lesson.objects.get(pk=1).questions.count(), 2)
-        print(Lesson.objects.get(pk=1).questions)
         lesson_expected_full_url = self.client.get(reverse('lesson-get-full-url', args=[1])).data
         subject_expected_full_url = self.client.get(reverse('subject-get-full-url', args=['Animals'])).data
         question1_expected_full_url = self.client.get(reverse('questionbase-get-full-url', args=[1])).data
@@ -120,12 +114,7 @@ class LessonTests(APITestCase):
                 'questions': [question1_expected_full_url, question2_expected_full_url]
             }
         )
-        print(response.data)
-        print(expected_data)
-        print(type(response.data))
-        print(type(expected_data))
         self.assertEqual(response.data, expected_data)
-        # self.assertEqual(dict(response.data), expected_data)
 
 class GetFullURLTests(APITestCase):
     def test_subject_get_full_URL(self):

@@ -1,5 +1,9 @@
-import React, { Component } from "react";
-import ReactDOM, { render } from "react-dom";
+import React, { useState, useEffect } from "react";
+import { createRoot } from 'react-dom/client';
+
+function useFetch() {
+    
+}
 
 function withFetching(WrappedComponent, url, errorMessage) {
     return class extends React.Component {
@@ -34,8 +38,8 @@ function withFetching(WrappedComponent, url, errorMessage) {
         }
 
         render() {
-            const { isLoading, error } = this.state;
-            console.log(JSON.parse(JSON.stringify(data)), isLoading, error);
+            const { isLoading, error, data } = this.state;
+            // console.log(JSON.parse(JSON.stringify(data)), isLoading, error);
 
             if (error) {
                 return <p>{errorMessage}</p>;
@@ -45,7 +49,7 @@ function withFetching(WrappedComponent, url, errorMessage) {
                 return <p>Loading...</p>;
             }
 
-            return <WrappedComponent fetchedData={this.state.data} { ...this.props } />;
+            return <WrappedComponent fetchedData={data} { ...this.props } />;
         }
     };
 }
@@ -300,7 +304,8 @@ class LessonDisplay extends React.Component {
 
         let mainArea;
         if (questionNumber <= totalQuestions) {
-            const questionURL = lessonData.questions[(questionNumber - 1)] + ' Accept:application/json';
+            const questionURL = lessonData.questions[(questionNumber)] + ' Accept:application/json';
+            // const questionURL = lessonData.questions[(questionNumber - 1)] + ' Accept:application/json';
             const errorMessage = 'Something wrong with loading question';
             const QuestionAreaWithFetching = withFetching(QuestionArea, questionURL, errorMessage);
             mainArea = <QuestionAreaWithFetching
@@ -325,62 +330,164 @@ class LessonDisplay extends React.Component {
     }
 }
 
-class LessonChoiceRow extends React.Component {
-    constructor(props) {
-        super(props);
+// class LessonChoiceRow extends React.Component {
+//     constructor(props) {
+//         super(props);
 
-        this.handleClickLesson = this.handleClickLesson.bind(this);
+//         this.handleClickLesson = this.handleClickLesson.bind(this);
+//     }
+
+//     handleClickLesson() {
+//         this.props.onNavigationSelect(this.props.ID);
+//     }
+
+//     render() {
+//         const lesson_name = this.props.lesson_name;
+//         //prop ID used in handleClickLesson
+
+//         return (
+//             <li><button onClick={this.handleClickLesson}>{lesson_name}</button></li>
+//         );
+//     }
+// }
+
+function LessonChoiceRow(props) {
+    function handleClickLesson() {
+        props.onNavigationSelect(props.ID);
     }
 
-    handleClickLesson() {
-        this.props.onNavigationSelect(this.props.ID);
-    }
-
-    render() {
-        lesson_name = this.props.lesson_name;
-        //prop ID used in handleClickLesson
-
-        return (
-            <li><button onClick={this.handleClickLesson}>{lesson_name}</button></li>
-        );
-    }
+    const lessonName = props.lessonName;
+    return <li><button onClick={handleClickLesson}>{lessonName}</button></li>;
 }
 
-class MenuDisplay extends React.Component {
-    constructor(props) {
-        super(props);
+// class MenuDisplay extends React.Component {
+//     constructor(props) {
+//         super(props);
 
-        this.handleNavigationSelect = this.handleNavigationSelect.bind(this);
+//         this.handleNavigationSelect = this.handleNavigationSelect.bind(this);
+//     }
+
+//     handleNavigationSelect(lessonID) {
+//         this.props.onNavigationSelect('lesson', lessonID);
+//     }
+
+//     render() {
+//         const lessonsData = this.props.fetchedData;
+//         console.log(JSON.parse(JSON.stringify(lessonsData)));
+
+//         if (!lessonsData) return <div>No data loaded yet</div>;
+//         if (!lessonsData.length) return <div>Data is empty</div>;
+
+//         return (
+//             <div>
+//                 <p>Select Lesson</p>
+//                 <ul>
+//                     {lessonsData.map(lesson => {
+//                         return (
+//                             <LessonChoiceRow
+//                                 key={lesson.lesson_name}
+//                                 ID={lesson.id}
+//                                 lesson_name={lesson.lesson_name}
+//                                 onNavigationSelect={this.handleNavigationSelect} />
+//                         );
+//                     })}
+//                 </ul>
+//             </div>
+//         );
+//     }
+// }
+
+function MenuDisplay(props) {
+    function handleNavigationSelect(lessonID) {
+        props.onNavigationSelect('lesson', lessonID);
     }
 
-    handleNavigationSelect(lessonID) {
-        this.props.onNavigationSelect('lesson', lessonID);
+    const lessonsData = props.fetchedData;
+    if (!lessonsData) return <div>No data loaded yet</div>;
+    if (!lessonsData.length) return <div>Data is empty</div>;
+
+    return (
+        <div>
+            <p>Select Lesson</p>
+            <ul>
+                {lessonsData.map(lesson => {
+                    return (
+                        <LessonChoiceRow
+                            key={lesson.lesson_name}
+                            ID={lesson.id}
+                            lessonName={lesson.lesson_name}
+                            onNavigationSelect={handleNavigationSelect} />
+                    );
+                })}
+            </ul>
+        </div>
+    );
+}
+
+// const currentDisplay = this.state.currentDisplay;
+// let display;
+// console.log(currentDisplay);
+// switch (currentDisplay) {
+//     case 'lesson-display':
+//         const lessonDetailURL = `api/lessons/${this.state.lessonID}.json`;
+//         const lessonErrorMessage = 'Something wrong with loading lesson';
+//         const LessonDisplayWithFetching = withFetching(LessonDisplay, lessonDetailURL, lessonErrorMessage);
+
+//         display = <LessonDisplayWithFetching
+//                     onNavigationSelect={this.handleNavigationSelect} />;
+//         break;
+//     case 'lesson-select-menu':
+//     default:
+//         const lessonsListURL = 'api/lessons.json';
+//         const lessonSelectErrorMessage = 'Something wrong with loading lesson-select menu';
+//         const MenuDisplayWithFetching = withFetching(MenuDisplay, lessonsListURL, lessonSelectErrorMessage);
+
+//         display = <MenuDisplayWithFetching onNavigationSelect={this.handleNavigationSelect} />;
+// }
+// return (
+//     <div>{display}</div>
+// );
+
+function App() {
+    const [navigationCategory, setNavigationCategory] = useState('lesson select menu');
+    const [navigationId, setNavigationId] = useState('menu');
+
+    function handleNavigationSelect(chosenNavigationCategory, navigationSelection) {
+        switch(chosenNavigationCategory) {
+            case 'lesson':
+                setNavigationCategory('lesson');
+                setNavigationId(navigationSelection);
+                break;
+            case 'menu':
+                setNavigationCategory('lesson select menu');
+                setNavigationId('');
+                break;
+            default:
+                setNavigationCategory('lesson select menu');
+                setNavigationId('');
+        }
     }
 
-    render() {
-        const lessonsData = this.props.fetchedData;
-        console.log(JSON.parse(JSON.stringify(lessonsData)));
+    let display;
+    switch(navigationCategory) {
+        case 'lesson':
+            const lessonDetailURL = `api/lessons/${navigationId}.json`;
+            const lessonErrorMessage = 'Something wrong with loading lesson';
+            // const LessonDisplayWithFetching = withFetching(LessonDisplay, lessonDetailURL, lessonErrorMessage);
 
-        if (!lessonsData) return <div>No data loaded yet</div>;
-        if (!lessonsData.length) return <div>Data is empty</div>;
+            // display = <LessonDisplayWithFetching
+            //             onNavigationSelect={this.handleNavigationSelect} />;
+            break;
+        case 'lesson select menu':
+        default:
+            const lessonsListURL = 'api/lessons.json';
+            const lessonSelectErrorMessage = 'Something wrong with loading lesson-select menu';
+            // const MenuDisplayWithFetching = withFetching(MenuDisplay, lessonsListURL, lessonSelectErrorMessage);
 
-        return (
-            <div>
-                <p>Select Lesson</p>
-                <ul>
-                    {lessonsData.map(lesson => {
-                        return (
-                            <LessonChoiceRow
-                                key={lesson.lesson_name}
-                                ID={lesson.id}
-                                lesson_name={lesson.lesson_name}
-                                onNavigationSelect={this.handleNavigationSelect} />
-                        );
-                    })}
-                </ul>
-            </div>
-        );
+            // display = <MenuDisplayWithFetching onNavigationSelect={this.handleNavigationSelect} />;
     }
+
+    return <li><button onClick={handleClickLesson}>{lessonName}</button></li>;
 }
 
 class App extends React.Component {
@@ -442,5 +549,6 @@ class App extends React.Component {
 
 export default App;
 
-const container = document.getElementById("app");
-render(<App />, container);
+const container = document.getElementById('app');
+const root = createRoot(container);
+root.render(<App tab="home" />);
