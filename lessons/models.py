@@ -111,37 +111,63 @@ class QuestionBase(models.Model):
     #     max_length=3,
     #     choices=QuestionLanguage.choices,
     #     blank=False,
+    # )    
+    # subjects = models.ManyToManyField(Subject)
+    # class QuestionType(models.TextChoices):
+    #     VOCAB_MULTIPLE_CHOICE = "VOCMC", _("Vocab Multiple Choice")
+    #     SENTENCE_MULTIPLE_CHOICE = "SENTMC", _("Sentence Multiple Choice")
+    #     WRITE_SENTENCE = "WRSENT", _("Write Sentence")
+    #     PICK_WORDS_TRANSLATE_SENTENCE = "BSENT", _("Build Sentence")
+    #     PAIRS = "PAIRS", _("Pairs")
+
+    # question_type = models.CharField(
+    #     max_length=6,
+    #     choices=QuestionType.choices,
     # )
-    
-    subjects = models.ManyToManyField(Subject)
-
-class Lesson(models.Model):
-    lesson_name = models.CharField(max_length=80, unique=True)
-    subjects = models.ManyToManyField(Subject)
-    questions = models.ManyToManyField(QuestionBase)
-
-class MCQuestionBase(QuestionBase):
-    correct_answer = models.CharField(max_length=150)
-    incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
+    question_type = models.SmallIntegerField(default=0, editable=False)
 
     class Meta:
         abstract = True
 
-class VocabMCQuestion(MCQuestionBase):
-    vocab_word = models.CharField(max_length=80)
+class Question(QuestionBase):
+    pass
 
-class SentenceMCQuestion(MCQuestionBase):
-    native_language_sentence = models.CharField(max_length=150)
+class Lesson(models.Model):
+    lesson_name = models.CharField(max_length=80, unique=True)
+    subjects = models.ManyToManyField(Subject)
+    questions = models.ManyToManyField(Question)
 
-class WriteSentenceQuestion(QuestionBase):
+# class MCQuestionBase(QuestionBase):
+    # correct_answer = models.CharField(max_length=150)
+    # incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
+
+#     class Meta:
+#         abstract = True
+
+class VocabMCQuestion(Question):
+    question_type = models.SmallIntegerField(default=1, editable=False)
+    correct_answer = models.CharField(max_length=700)
+    incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
+    vocab_word = models.CharField(max_length=700)
+
+class SentenceMCQuestion(Question):
+    question_type = models.SmallIntegerField(default=2, editable=False)
+    correct_answer = models.CharField(max_length=700)
+    incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
+    native_language_sentence = models.CharField(max_length=700)
+
+class WriteSentenceQuestion(Question):
+    question_type = models.SmallIntegerField(default=3, editable=False)
     native_language_sentence = models.CharField(max_length=150)
     correct_answer = models.CharField(max_length=150)
 
-class TranslatePickWordsQuestion(QuestionBase):
+class TranslatePickWordsQuestion(Question):
+    question_type = models.SmallIntegerField(default=4, editable=False)
     native_language_sentence = models.CharField(max_length=150)
     correct_answer = models.CharField(max_length=150)
     incorrect_words = models.JSONField(validators=[validate_pick_words_JSON])
 
-class PairsQuestion(QuestionBase):
+class PairsQuestion(Question):
+    question_type = models.SmallIntegerField(default=5, editable=False)
     mixed = models.BooleanField(default=False)
     word_pairs = models.JSONField(validators=[validate_word_pairs_JSON])

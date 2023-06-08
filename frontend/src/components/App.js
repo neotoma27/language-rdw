@@ -34,6 +34,69 @@ function useData(url) {
     return { data, loading, error };
 }
 
+function MultiChQuestionDisplay({ lessonId, onNavigationSelect }) {
+    const [userChoice, setUserChoice] = useState(null);
+
+    function handleInputChange(e) {
+        setUserChoice(parseInt(e.target.value, 10));
+    }
+    function handleSubmit() {
+
+    }
+    function handleNextQuestion() {
+
+    }
+
+    const { data, loading, error } = useData('api/vocabmcquestions/1.json');
+    // if (data) {const choices = data.incorrect_answer_options.options.concat(data.correct_answer)};
+
+    return (
+        <div>
+            <h1>Question 1</h1>
+            {loading && <div>Loading question</div>}
+            {error && (
+                <div>{`There was a problem fetching the question data - ${error}`}</div>
+            )}
+            {data && <form onSubmit={handleSubmit}>
+                <section>
+                    <div>Which one means {data.vocab_word}?</div>
+                    <fieldset>
+                        <legend>Select</legend>
+                        <ul>
+                            {data.incorrect_answer_options.options.concat(data.correct_answer).map((choice, choiceIndex) => 
+                                <li key={choice}>
+                                    <label>
+                                        {choice}
+                                        <input
+                                            type="radio"
+                                            name="choice"
+                                            value={choiceIndex}
+                                            checked={choiceIndex === userChoice}
+                                            onChange={handleInputChange} />
+                                    </label>
+                                </li>
+                            )}
+                        </ul>
+                    </fieldset>
+                </section>
+            </form>}
+        </div>
+    );
+}
+
+function LessonDisplay({ lessonId, onNavigationSelect }) {
+    const [questionNumber, setQuestionNumber] = useState(1);
+
+    function handleNextQuestion() {
+
+    }
+    function handleQuitLesson() {
+
+    }
+
+    
+}
+
 function LessonChoiceRow({ id, lessonName, onNavigationSelect }) {
     function handleClickLesson() {
         onNavigationSelect(id);
@@ -42,7 +105,7 @@ function LessonChoiceRow({ id, lessonName, onNavigationSelect }) {
     return <button onClick={handleClickLesson}>{lessonName}</button>;
 }
 
-function MenuDisplay(onNavigationSelect) {
+function MenuDisplay({ onNavigationSelect }) {
     function handleNavigationSelect(id) {
         onNavigationSelect('lesson', id);
     }
@@ -70,8 +133,10 @@ function MenuDisplay(onNavigationSelect) {
 }
 
 export default function App() {
-    const [navigationCategory, setNavigationCategory] = useState('menu');
-    const [navigationId, setNavigationId] = useState('lesson select');
+    // const [navigationCategory, setNavigationCategory] = useState('menu');
+    // const [navigationId, setNavigationId] = useState('lesson select');
+    const [navigationCategory, setNavigationCategory] = useState('lesson');
+    const [navigationId, setNavigationId] = useState('');
 
     function handleNavigationSelect(chosenNavigationCategory, navigationSelection) {
         switch(chosenNavigationCategory) {
@@ -86,15 +151,12 @@ export default function App() {
         }
     }
 
-    let display, data, loading, error;
+    let display;
     switch(navigationCategory) {
         case 'lesson':
-            ({ data, loading, error } = useData(`api/lessons/${navigationId}.json`));
             display =
-                <LessonDisplay
-                    data={data}
-                    loading={loading}
-                    error={error}
+                <MultiChQuestionDisplay
+                    lessonId={navigationId}
                     onNavigationSelect={handleNavigationSelect} />;
             break;
         case 'menu':
