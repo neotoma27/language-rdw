@@ -34,7 +34,7 @@ function useData(url) {
     return { data, loading, error };
 }
 
-function MultiChQuestionDisplay({ lessonId, onNavigationSelect }) {
+function MultiChQuestionDisplay({ questionId, onNextQuestion }) {
     const [userChoice, setUserChoice] = useState(null);
 
     function handleInputChange(e) {
@@ -47,7 +47,7 @@ function MultiChQuestionDisplay({ lessonId, onNavigationSelect }) {
 
     }
 
-    const { data, loading, error } = useData('api/vocabmcquestions/1.json');
+    const { data, loading, error } = useData(`api/vocabmcquestions/${questionId}.json`);
     // if (data) {const choices = data.incorrect_answer_options.options.concat(data.correct_answer)};
 
     return (
@@ -84,17 +84,60 @@ function MultiChQuestionDisplay({ lessonId, onNavigationSelect }) {
     );
 }
 
+function QuestionDisplay({ questionUrl, onNextQuestion }) {
+    function handleNextQuestion() {
+        onNextQuestion();
+    }
+
+    const { data, loading, error } = useData(questionUrl);
+    let display = <div></div>;
+    if (data) {
+        switch (data.question_type) {
+            case 1:
+                display =
+                    <MultiChQuestionDisplay
+                        questionId={data.id}
+                        onNextQuestion={handleNextQuestion} />;
+                break;
+            default:
+                display = <div>{`Invalid question type - ${data.question_type}`}</div>;
+        }
+    }
+
+    return (
+        <div>
+            {loading && <div>Loading Question Data</div>}
+            {error && (
+                <div>{`There was a problem fetching the question data - ${error}`}</div>
+            )}
+            {display}
+        </div>
+    );
+}
+
 function LessonDisplay({ lessonId, onNavigationSelect }) {
     const [questionNumber, setQuestionNumber] = useState(1);
 
     function handleNextQuestion() {
-
+        setQuestionNumber(questionNumber + 1);
     }
     function handleQuitLesson() {
 
     }
 
-    
+    const { data, loading, error } = useData('api/lessons/1.json');
+
+    return (
+        <div>
+            {loading && <div>Loading Lesson</div>}
+            {error && (
+                <div>{`There was a problem fetching the lesson data - ${error}`}</div>
+            )}
+            {data && <QuestionDisplay
+                questionUrl={data.questions[questionNumber - 1]}
+                onNextQuestion={handleNextQuestion} />}
+        </div>
+    );
 }
 
 function LessonChoiceRow({ id, lessonName, onNavigationSelect }) {
@@ -136,7 +179,7 @@ export default function App() {
     // const [navigationCategory, setNavigationCategory] = useState('menu');
     // const [navigationId, setNavigationId] = useState('lesson select');
     const [navigationCategory, setNavigationCategory] = useState('lesson');
-    const [navigationId, setNavigationId] = useState('');
+    const [navigationId, setNavigationId] = useState(1);
 
     function handleNavigationSelect(chosenNavigationCategory, navigationSelection) {
         switch(chosenNavigationCategory) {
@@ -155,7 +198,7 @@ export default function App() {
     switch(navigationCategory) {
         case 'lesson':
             display =
-                <MultiChQuestionDisplay
+                <LessonDisplay
                     lessonId={navigationId}
                     onNavigationSelect={handleNavigationSelect} />;
             break;
