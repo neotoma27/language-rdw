@@ -13,8 +13,6 @@ function useData(url) {
                 setError(null);
                 const response = await axios.get(url);
                 if (!ignore) {
-                    console.log(response);
-                    console.log(response.data);
                     setData(response.data);
                 }
             } catch (err) {
@@ -34,36 +32,94 @@ function useData(url) {
     return { data, loading, error };
 }
 
-function MultiChQuestionDisplay({ questionId, onNextQuestion }) {
+function useQuestionData(questionBaseUrl) {
+    const [questionBaseData, setQuestionBaseData] = useState(null);
+    const [questionBaseLoading, setQuestionBaseLoading] = useState(false);
+    const [questionBaseError, setQuestionBaseError] = useState(null);
+    const [questionSpecificData, setQuestionSpecificData] = useState(null);
+    const [questionSpecificLoading, setQuestionSpecificLoading] = useState(false);
+    const [questionSpecificError, setQuestionSpecificError] = useState(null);
+  
+    useEffect(() => {
+        async function startFetching() {
+            setQuestionBaseLoading(true);
+            try {
+                setQuestionBaseError(null);
+                const responseB = await axios.get(questionBaseUrl);
+                if (!ignore) {
+                    setQuestionBaseData(responseB.data);
+                    const questionSpecificUrl = `api/vocabmcquestions/${responseB.data.id}.json`;
+                    setQuestionSpecificLoading(true);
+                    try {
+                        setQuestionSpecificError(null);
+                        const responseSp = await axios.get(questionSpecificUrl);
+                        if (!ignore) {
+                            setQuestionSpecificData(responseSp.data);
+                        }
+                    } catch (err) {
+                        setQuestionSpecificError(err);
+                        setQuestionSpecificData(null);
+                    }
+                    setQuestionSpecificLoading(false);
+                }
+            } catch (err) {
+                setQuestionBaseError(err);
+                setQuestionBaseData(null);
+            }
+            setQuestionBaseLoading(false);
+        }
+        let ignore = false;
+        startFetching();
+        return () => {
+            ignore = true;
+        }
+    }, [questionBaseUrl]);
+  
+    return { questionBaseData, questionBaseLoading, questionBaseError, questionSpecificData, questionSpecificLoading, questionSpecificError };
+}
+
+function FeedbackMessage({ correct, correctAnswer, onContinue }) {
+    let display = <div>Feedback Message Error</div>;
+    if (correct) {
+        display = <div>
+            <div>You are correct</div>
+            <div>CONTINUE</div>
+        </div>;
+    }
+    else {
+        display = <div>
+            <div>Sorry, incorrect</div>
+            <div>Correct solution:</div>
+            <div>{correctAnswer}</div>
+            <div>CONTINUE</div>
+        </div>;
+    }
+    return display;
+}
+
+function MultiChQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
     const [userChoice, setUserChoice] = useState(null);
+    const [correctChoice, setCorrectChoice] = useState(3);
 
     function handleInputChange(e) {
         setUserChoice(parseInt(e.target.value, 10));
     }
-    function handleSubmit() {
-
-    }
-    function handleNextQuestion() {
-
+    function handleSubmit(e) {
+        e.preventDefault();
+        onSubmitAnswer(userChoice === correctChoice);
     }
 
-    const { data, loading, error } = useData(`api/vocabmcquestions/${questionId}.json`);
-    // if (data) {const choices = data.incorrect_answer_options.options.concat(data.correct_answer)};
-
+    const answerOptions = questionData.incorrect_answer_options.options.toSpliced(correctChoice, 0, questionData.correct_answer);
     return (
         <div>
             <h1>Question 1</h1>
-            {loading && <div>Loading question</div>}
-            {error && (
-                <div>{`There was a problem fetching the question data - ${error}`}</div>
-            )}
-            {data && <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
                 <section>
-                    <div>Which one means {data.vocab_word}?</div>
+                    <div>Which one means {questionData.vocab_word}?</div>
                     <fieldset>
                         <legend>Select</legend>
                         <ul>
-                            {data.incorrect_answer_options.options.concat(data.correct_answer).map((choice, choiceIndex) => 
+                            {answerOptions.map((choice, choiceIndex) => 
                                 <li key={choice}>
                                     <label>
                                         {choice}
@@ -79,51 +135,79 @@ function MultiChQuestionDisplay({ questionId, onNextQuestion }) {
                         </ul>
                     </fieldset>
                 </section>
-            </form>}
+                {(!answerSubmitted) && <button type="submit">CHECK</button>}
+            </form>
         </div>
     );
 }
 
-function QuestionDisplay({ questionUrl, onNextQuestion }) {
+function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer }) {
+    const [answeredCorrectly, setAnsweredCorrectly] = useState(null);
+
+    function handleSubmitAnswer(answeredCorrectlySubmit) {
+        onSubmitAnswer();
+        setAnsweredCorrectly(answeredCorrectlySubmit);
+    }
+    
     function handleNextQuestion() {
+        setAnsweredCorrectly(null);
         onNextQuestion();
     }
 
-    const { data, loading, error } = useData(questionUrl);
+    const { questionBaseData, questionBaseLoading, questionBaseError, questionSpecificData, questionSpecificLoading, questionSpecificError } = useQuestionData(questionUrl);
     let display = <div></div>;
-    if (data) {
-        switch (data.question_type) {
-            case 1:
-                display =
-                    <MultiChQuestionDisplay
-                        questionId={data.id}
-                        onNextQuestion={handleNextQuestion} />;
-                break;
-            default:
-                display = <div>{`Invalid question type - ${data.question_type}`}</div>;
-        }
+    let correctAnswer = '';
+    if (questionSpecificData) {
+        correctAnswer = questionSpecificData.correct_answer;
+        display = 
+            <MultiChQuestionDisplay
+                questionData={questionSpecificData}
+                answerSubmitted={answerSubmitted}
+                onSubmitAnswer={handleSubmitAnswer} />;
+    //     switch (data.question_type) {
+    //         case 1:
+    //             display =
+                    // <MultiChQuestionDisplay
+                    //     questionId={data.id}
+                    //     answerSubmitted={answerSubmitted}
+                    //     onQuestionDataLoaded={handleQuestionDataLoaded}
+                    //     onSubmitAnswer={handleSubmitAnswer} />;
+    //             break;
+    //         default:
+    //             display = <div>{`Invalid question type - ${data.question_type}`}</div>;
+    //     }
     }
 
     return (
         <div>
-            {loading && <div>Loading Question Data</div>}
-            {error && (
-                <div>{`There was a problem fetching the question data - ${error}`}</div>
+            {(questionBaseLoading || questionSpecificLoading) && <div>Loading Question Data</div>}
+            {(questionBaseError || questionSpecificError) && (
+                <div>{`There was a problem fetching the question data - ${questionBaseError} ${questionSpecificError}`}</div>
             )}
             {display}
+            {answerSubmitted && <FeedbackMessage
+                correct={answeredCorrectly}
+                correctAnswer={correctAnswer}
+                onContinue={handleNextQuestion} />
+            }
         </div>
     );
 }
 
 function LessonDisplay({ lessonId, onNavigationSelect }) {
     const [questionNumber, setQuestionNumber] = useState(1);
+    const [answerSubmitted, setAnswerSubmitted] = useState(false);
 
+    function handleSubmitAnswer() {
+        setAnswerSubmitted(true);
+    }
     function handleNextQuestion() {
         setQuestionNumber(questionNumber + 1);
+        setAnswerSubmitted(false);
     }
-    function handleQuitLesson() {
+    // function handleQuitLesson() {
 
-    }
+    // }
 
     const { data, loading, error } = useData('api/lessons/1.json');
 
@@ -135,7 +219,9 @@ function LessonDisplay({ lessonId, onNavigationSelect }) {
             )}
             {data && <QuestionDisplay
                 questionUrl={data.questions[questionNumber - 1]}
-                onNextQuestion={handleNextQuestion} />}
+                answerSubmitted={answerSubmitted}
+                onSubmitAnswer={handleSubmitAnswer} />
+            }
         </div>
     );
 }
