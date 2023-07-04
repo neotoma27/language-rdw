@@ -48,7 +48,8 @@ function useQuestionData(questionBaseUrl) {
                 const responseB = await axios.get(questionBaseUrl);
                 if (!ignore) {
                     setQuestionBaseData(responseB.data);
-                    const questionSpecificUrl = `api/vocabmcquestions/${responseB.data.id}.json`;
+                    const questionType = ['vocabmcquestions', 'sentencemcquestions', 'writesentencequestions'][responseB.data.question_type - 1];
+                    const questionSpecificUrl = `api/${questionType}/${responseB.data.id}.json`;
                     setQuestionSpecificLoading(true);
                     try {
                         setQuestionSpecificError(null);
@@ -78,12 +79,34 @@ function useQuestionData(questionBaseUrl) {
     return { questionBaseData, questionBaseLoading, questionBaseError, questionSpecificData, questionSpecificLoading, questionSpecificError };
 }
 
+function shuffleOrder(number) {
+    let options = [...Array(number).keys()];
+    for (let i = number - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+    }
+    return {correct: options[0], rest: options.slice(1)};
+}
+
+function orderOptions(order, correct, rest) {
+    let ordered = [...Array(4)];
+    ordered[order.correct] = correct;
+    for (let i = 0; i < 3; i++) {
+        ordered[order.rest[i]] = rest[i];
+    }
+    return ordered;
+}
+
 function FeedbackMessage({ correct, correctAnswer, onContinue }) {
+    function handleContinue() {
+        onContinue();
+    }
+    
     let display = <div>Feedback Message Error</div>;
     if (correct) {
         display = <div>
             <div>You are correct</div>
-            <div>CONTINUE</div>
+            <button onClick={handleContinue}>CONTINUE</button>
         </div>;
     }
     else {
@@ -91,28 +114,35 @@ function FeedbackMessage({ correct, correctAnswer, onContinue }) {
             <div>Sorry, incorrect</div>
             <div>Correct solution:</div>
             <div>{correctAnswer}</div>
-            <div>CONTINUE</div>
+            <button onClick={handleContinue}>CONTINUE</button>
         </div>;
     }
     return display;
 }
 
-function MultiChQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
+function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
     const [userChoice, setUserChoice] = useState(null);
-    const [correctChoice, setCorrectChoice] = useState(3);
+    const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
 
     function handleInputChange(e) {
+        // console.log(['before', userChoice, e.target.value]);
         setUserChoice(parseInt(e.target.value, 10));
+        // console.log(['after', userChoice, e.target.value]);
     }
     function handleSubmit(e) {
+        // console.log([userChoice, optionsOrder.correct]);
         e.preventDefault();
-        onSubmitAnswer(userChoice === correctChoice);
+        onSubmitAnswer(userChoice === optionsOrder.correct);
     }
 
-    const answerOptions = questionData.incorrect_answer_options.options.toSpliced(correctChoice, 0, questionData.correct_answer);
+    // console.log([optionsOrder, questionData.correct_answer, questionData.incorrect_answer_options.options]);
+    // console.log(optionsOrder.rest.toSpliced(0, 0, optionsOrder.correct));
+    // console.log(questionData.incorrect_answer_options.options.toSpliced(0, 0, questionData.correct_answer));
+    const answerOptions = orderOptions(optionsOrder, questionData.correct_answer, questionData.incorrect_answer_options.options);
+    // console.log(answerOptions);
+    
     return (
         <div>
-            <h1>Question 1</h1>
             <form onSubmit={handleSubmit}>
                 <section>
                     <div>Which one means {questionData.vocab_word}?</div>
@@ -141,7 +171,51 @@ function MultiChQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer 
     );
 }
 
-function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer }) {
+function SentenceMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
+    const [userChoice, setUserChoice] = useState(null);
+    const [correctChoice, setCorrectChoice] = useState(3);
+
+    function handleInputChange(e) {
+        setUserChoice(parseInt(e.target.value, 10));
+    }
+    function handleSubmit(e) {
+        e.preventDefault();
+        onSubmitAnswer(userChoice === correctChoice);
+    }
+
+    const answerOptions = questionData.incorrect_answer_options.options.toSpliced(correctChoice, 0, questionData.correct_answer);
+    return (
+        <div>
+            <form onSubmit={handleSubmit}>
+                <section>
+                    <div>Select the correct translation</div>
+                    <div>{questionData.native_language_sentence}</div>
+                    <fieldset>
+                        <legend>Select</legend>
+                        <ul>
+                            {answerOptions.map((choice, choiceIndex) => 
+                                <li key={choice}>
+                                    <label>
+                                        {choice}
+                                        <input
+                                            type="radio"
+                                            name="choice"
+                                            value={choiceIndex}
+                                            checked={choiceIndex === userChoice}
+                                            onChange={handleInputChange} />
+                                    </label>
+                                </li>
+                            )}
+                        </ul>
+                    </fieldset>
+                </section>
+                {(!answerSubmitted) && <button type="submit">CHECK</button>}
+            </form>
+        </div>
+    );
+}
+
+function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer, onNextQuestion }) {
     const [answeredCorrectly, setAnsweredCorrectly] = useState(null);
 
     function handleSubmitAnswer(answeredCorrectlySubmit) {
@@ -154,28 +228,31 @@ function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer }) {
         onNextQuestion();
     }
 
-    const { questionBaseData, questionBaseLoading, questionBaseError, questionSpecificData, questionSpecificLoading, questionSpecificError } = useQuestionData(questionUrl);
+    const { questionBaseData, questionBaseLoading, questionBaseError,
+        questionSpecificData, questionSpecificLoading, questionSpecificError } = useQuestionData(questionUrl);
     let display = <div></div>;
     let correctAnswer = '';
     if (questionSpecificData) {
         correctAnswer = questionSpecificData.correct_answer;
-        display = 
-            <MultiChQuestionDisplay
-                questionData={questionSpecificData}
-                answerSubmitted={answerSubmitted}
-                onSubmitAnswer={handleSubmitAnswer} />;
-    //     switch (data.question_type) {
-    //         case 1:
-    //             display =
-                    // <MultiChQuestionDisplay
-                    //     questionId={data.id}
-                    //     answerSubmitted={answerSubmitted}
-                    //     onQuestionDataLoaded={handleQuestionDataLoaded}
-                    //     onSubmitAnswer={handleSubmitAnswer} />;
-    //             break;
-    //         default:
-    //             display = <div>{`Invalid question type - ${data.question_type}`}</div>;
-    //     }
+        switch (questionBaseData.question_type) {
+            case 1:
+                display = 
+                    <VocabMCQuestionDisplay
+                        key={questionBaseData.id}
+                        questionData={questionSpecificData}
+                        answerSubmitted={answerSubmitted}
+                        onSubmitAnswer={handleSubmitAnswer} />;
+                break;
+            case 2:
+                display = 
+                    <SentenceMCQuestionDisplay
+                        questionData={questionSpecificData}
+                        answerSubmitted={answerSubmitted}
+                        onSubmitAnswer={handleSubmitAnswer} />;
+                break;
+            default:
+                display = <div>{`Invalid question type - ${data.question_type}`}</div>;
+        }
     }
 
     return (
@@ -217,10 +294,15 @@ function LessonDisplay({ lessonId, onNavigationSelect }) {
             {error && (
                 <div>{`There was a problem fetching the lesson data - ${error}`}</div>
             )}
-            {data && <QuestionDisplay
-                questionUrl={data.questions[questionNumber - 1]}
-                answerSubmitted={answerSubmitted}
-                onSubmitAnswer={handleSubmitAnswer} />
+            {data &&
+                <div>
+                    <h1>{`Question ${questionNumber} of ${data.questions.length}`}</h1>
+                    <QuestionDisplay
+                        questionUrl={data.questions[questionNumber - 1]}
+                        answerSubmitted={answerSubmitted}
+                        onSubmitAnswer={handleSubmitAnswer}
+                        onNextQuestion={handleNextQuestion} />
+                </div>
             }
         </div>
     );

@@ -7,6 +7,8 @@ router.register(r'lessons', views.LessonViewSet)
 router.register(r'questions', views.QuestionViewSet)
 router.register(r'subjects', views.SubjectViewSet)
 router.register(r'vocabmcquestions', views.VocabMCQuestionViewSet)
+router.register(r'sentencemcquestions', views.SentenceMCQuestionViewSet)
+router.register(r'writesentencequestions', views.WriteSentenceQuestionViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),
