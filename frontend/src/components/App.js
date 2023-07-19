@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 
+function replaceItemInArray(items, replaceItem, replaceIndex) {
+    return items.map((item) => {
+        if (item.id === replaceIndex) {
+            return replaceItem;
+        } else {
+            return item;
+        }
+    });
+}
+
 function useData(url) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -10,7 +20,7 @@ function useData(url) {
         async function startFetching() {
             setLoading(true);
             try {
-                setError(null);
+                // setError(null);
                 const response = await axios.get(url);
                 if (!ignore) {
                     setData(response.data);
@@ -30,6 +40,40 @@ function useData(url) {
     }, [url]);
   
     return { data, loading, error };
+}
+
+function useDataMultiple(urls) {
+    const [dataArray, setDataArray] = useState(Array(urls.length).fill(null));
+    const [loadingArray, setLoadingArray] = useState(Array(urls.length).fill(false));
+    const [errorArray, setErrorArray] = useState(Array(urls.length).fill(null));
+  
+    useEffect(() => {
+        async function startFetching() {
+            for (let i = 0; i < urls.length; i++) {
+                setLoadingArray(replaceItemInArray(loadingArray, true, i));
+                try {
+                    // setErrorArray(replaceItemInArray());
+                    const response = await axios.get(urls[i]);
+                    if (!ignore) {
+                        setDataArray(replaceItemInArray(dataArray, response.data, i));
+                    }
+                } catch (err) {
+                    setErrorArray(replaceItemInArray(errorArray, err, i));
+                    setLoadingArray(replaceItemInArray(loadingArray, false, i));
+                }
+                setLoadingArray(replaceItemInArray(loadingArray, false, i));
+            }
+            
+        }
+
+        let ignore = false;
+        startFetching();
+        return () => {
+            ignore = true;
+        }
+    }, [urls]);
+  
+    return { dataArray, loadingArray, errorArray };
 }
 
 function useQuestionData(questionBaseUrl) {
@@ -125,27 +169,26 @@ function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer 
     const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
 
     function handleInputChange(e) {
-        // console.log(['before', userChoice, e.target.value]);
         setUserChoice(parseInt(e.target.value, 10));
-        // console.log(['after', userChoice, e.target.value]);
     }
+
     function handleSubmit(e) {
-        // console.log([userChoice, optionsOrder.correct]);
         e.preventDefault();
         onSubmitAnswer(userChoice === optionsOrder.correct);
     }
 
-    // console.log([optionsOrder, questionData.correct_answer, questionData.incorrect_answer_options.options]);
-    // console.log(optionsOrder.rest.toSpliced(0, 0, optionsOrder.correct));
-    // console.log(questionData.incorrect_answer_options.options.toSpliced(0, 0, questionData.correct_answer));
-    const answerOptions = orderOptions(optionsOrder, questionData.correct_answer, questionData.incorrect_answer_options.options);
-    // console.log(answerOptions);
+    // const { dataArray, loadingArray, errorArray } = useDataMultiple(questionData.)
+    const answerOptions = orderOptions(
+        optionsOrder,
+        questionData.vocab_word.target_language_word,
+        questionData.incorrect_answer_options.map(option => option.target_language_word)
+    );
     
     return (
         <div>
             <form onSubmit={handleSubmit}>
                 <section>
-                    <div>Which one means {questionData.vocab_word}?</div>
+                    <div>Which one means {questionData.vocab_word.native_language_word}?</div>
                     <fieldset>
                         <legend>Select</legend>
                         <ul>
@@ -173,17 +216,18 @@ function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer 
 
 function SentenceMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
     const [userChoice, setUserChoice] = useState(null);
-    const [correctChoice, setCorrectChoice] = useState(3);
+    const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
 
     function handleInputChange(e) {
         setUserChoice(parseInt(e.target.value, 10));
     }
     function handleSubmit(e) {
         e.preventDefault();
-        onSubmitAnswer(userChoice === correctChoice);
+        onSubmitAnswer(userChoice === optionsOrder.correct);
     }
 
-    const answerOptions = questionData.incorrect_answer_options.options.toSpliced(correctChoice, 0, questionData.correct_answer);
+    const answerOptions = orderOptions(optionsOrder, questionData.correct_answer, questionData.incorrect_answer_options.options);
+
     return (
         <div>
             <form onSubmit={handleSubmit}>
@@ -233,7 +277,6 @@ function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer, onNextQ
     let display = <div></div>;
     let correctAnswer = '';
     if (questionSpecificData) {
-        correctAnswer = questionSpecificData.correct_answer;
         switch (questionBaseData.question_type) {
             case 1:
                 display = 
@@ -242,13 +285,16 @@ function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer, onNextQ
                         questionData={questionSpecificData}
                         answerSubmitted={answerSubmitted}
                         onSubmitAnswer={handleSubmitAnswer} />;
+                correctAnswer = questionSpecificData.vocab_word.target_language_word; 
                 break;
             case 2:
                 display = 
                     <SentenceMCQuestionDisplay
+                        key={questionBaseData.id}
                         questionData={questionSpecificData}
                         answerSubmitted={answerSubmitted}
                         onSubmitAnswer={handleSubmitAnswer} />;
+                correctAnswer = questionSpecificData.correct_answer;
                 break;
             default:
                 display = <div>{`Invalid question type - ${data.question_type}`}</div>;
@@ -344,10 +390,8 @@ function MenuDisplay({ onNavigationSelect }) {
 }
 
 export default function App() {
-    // const [navigationCategory, setNavigationCategory] = useState('menu');
-    // const [navigationId, setNavigationId] = useState('lesson select');
-    const [navigationCategory, setNavigationCategory] = useState('lesson');
-    const [navigationId, setNavigationId] = useState(1);
+    const [navigationCategory, setNavigationCategory] = useState('menu');
+    const [navigationId, setNavigationId] = useState('lesson select');
 
     function handleNavigationSelect(chosenNavigationCategory, navigationSelection) {
         switch(chosenNavigationCategory) {

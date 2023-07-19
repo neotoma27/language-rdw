@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from lessons.models import (Subject, Question, Lesson, VocabMCQuestion, SentenceMCQuestion, WriteSentenceQuestion, TranslatePickWordsQuestion,
+from lessons.models import (Subject, Question, Lesson, VocabWord, VocabMCQuestion, SentenceMCQuestion, WriteSentenceQuestion, TranslatePickWordsQuestion,
     PairsQuestion)
 
 
@@ -35,11 +35,22 @@ class LessonSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'lesson_name', 'subjects', 'questions']
 
 
-class VocabMCQuestionSerializer(serializers.HyperlinkedModelSerializer):
+class VocabWordSerializer(serializers.HyperlinkedModelSerializer):
+    subjects = serializers.HyperlinkedRelatedField(
+        many=True, view_name='subject-detail', queryset=Subject.objects.all())
+
+    class Meta:
+        model = VocabWord
+        fields = ['url', 'id', 'target_language_word', 'native_language_word', 'subjects', 'subjects']
+
+
+class VocabMCQuestionSerializer(serializers.ModelSerializer):
+    incorrect_answer_options = VocabWordSerializer(many=True)
+    vocab_word = VocabWordSerializer(many=False)
+    
     class Meta:
         model = VocabMCQuestion
-        fields = ['url', 'id', 'vocab_word', 'correct_answer', 'incorrect_answer_options']
-        # extra_kwargs = {'incorrect_answer_options': {'binary': True}}
+        fields = ['url', 'id', 'incorrect_answer_options', 'vocab_word']
 
 
 class SentenceMCQuestionSerializer(serializers.HyperlinkedModelSerializer):

@@ -120,6 +120,8 @@ class Lesson(models.Model):
     lesson_name = models.CharField(max_length=80, unique=True)
     subjects = models.ManyToManyField(Subject)
     questions = models.ManyToManyField(Question)
+    def __str__(self):
+        return self.lesson_name
 # class MCQuestionBase(QuestionBase):
     # correct_answer = models.CharField(max_length=150)
     # incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
@@ -127,27 +129,45 @@ class Lesson(models.Model):
 #         abstract = True
 
 
+class VocabWord(models.Model):
+    target_language_word = models.CharField(max_length=200)
+    native_language_word = models.CharField(max_length=200)
+    subjects = models.ManyToManyField(Subject)
+    def __str__(self):
+        return self.target_language_word
+
+
 class VocabMCQuestion(Question):
-    correct_answer = models.CharField(max_length=700)
-    incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
-    vocab_word = models.CharField(max_length=700)
+    incorrect_answer_options = models.ManyToManyField(
+        VocabWord,
+        related_name="question_this_is_incorrect_option_for",
+        help_text='Question should have three options for incorrect answers')
+    vocab_word = models.ForeignKey(VocabWord, on_delete=models.CASCADE, related_name="question_this_is_correct_answer_for")
+    def __str__(self):
+        return str(self.vocab_word)
 
 
 class SentenceMCQuestion(Question):
     correct_answer = models.CharField(max_length=700)
     incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
     native_language_sentence = models.CharField(max_length=700)
+    def __str__(self):
+        return self.native_language_sentence
 
 
 class WriteSentenceQuestion(Question):
     native_language_sentence = models.CharField(max_length=150)
     correct_answer = models.CharField(max_length=150)
+    def __str__(self):
+        return self.native_language_sentence
 
 
 class TranslatePickWordsQuestion(Question):
     native_language_sentence = models.CharField(max_length=150)
     correct_answer = models.CharField(max_length=150)
     incorrect_words = models.JSONField(validators=[validate_pick_words_JSON])
+    def __str__(self):
+        return self.native_language_sentence
 
 
 class PairsQuestion(Question):
