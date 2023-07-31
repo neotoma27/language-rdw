@@ -1,6 +1,8 @@
 from django.shortcuts import render
-from lessons.models import Question, Lesson, Subject, VocabWord, VocabMCQuestion, SentenceMCQuestion, WriteSentenceQuestion
-from lessons.serializers import QuestionSerializer, LessonSerializer, SubjectSerializer, VocabWordSerializer, VocabMCQuestionSerializer, SentenceMCQuestionSerializer, WriteSentenceQuestionSerializer
+from lessons.models import Question, Lesson, Subject, VocabWord, VocabMCQuestion, Sentence, SentenceMCQuestion, WriteSentenceQuestion
+from lessons.serializers import (QuestionSerializer, LessonSerializer, SubjectSerializer, VocabWordSerializer,
+                                 VocabMCQuestionSerializer, SentenceSerializer, SentenceMCQuestionSerializer,
+                                 WriteSentenceQuestionSerializer)
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -37,6 +39,11 @@ class VocabWordViewSet(ModelViewSetWithGetFullURL):
 class VocabMCQuestionViewSet(ModelViewSetWithGetFullURL):
     queryset = VocabMCQuestion.objects.all()
     serializer_class = VocabMCQuestionSerializer
+
+
+class SentenceViewSet(ModelViewSetWithGetFullURL):
+    queryset = Sentence.objects.all()
+    serializer_class = SentenceSerializer
 
 
 class SentenceMCQuestionViewSet(ModelViewSetWithGetFullURL):

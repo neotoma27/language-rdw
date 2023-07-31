@@ -177,7 +177,6 @@ function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer 
         onSubmitAnswer(userChoice === optionsOrder.correct);
     }
 
-    // const { dataArray, loadingArray, errorArray } = useDataMultiple(questionData.)
     const answerOptions = orderOptions(
         optionsOrder,
         questionData.vocab_word.target_language_word,
@@ -226,14 +225,18 @@ function SentenceMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnsw
         onSubmitAnswer(userChoice === optionsOrder.correct);
     }
 
-    const answerOptions = orderOptions(optionsOrder, questionData.correct_answer, questionData.incorrect_answer_options.options);
+    const answerOptions = orderOptions(
+        optionsOrder,
+        questionData.correct_sentence.target_language_sentence,
+        questionData.incorrect_answer_options.map(option => option.target_language_sentence)
+    );
 
     return (
         <div>
             <form onSubmit={handleSubmit}>
                 <section>
                     <div>Select the correct translation</div>
-                    <div>{questionData.native_language_sentence}</div>
+                    <div>{questionData.correct_sentence.native_language_sentence}</div>
                     <fieldset>
                         <legend>Select</legend>
                         <ul>
@@ -276,7 +279,7 @@ function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer, onNextQ
         questionSpecificData, questionSpecificLoading, questionSpecificError } = useQuestionData(questionUrl);
     let display = <div></div>;
     let correctAnswer = '';
-    if (questionSpecificData) {
+    if (questionSpecificData && questionBaseData.id === questionSpecificData.id) {
         switch (questionBaseData.question_type) {
             case 1:
                 display = 
@@ -294,7 +297,7 @@ function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer, onNextQ
                         questionData={questionSpecificData}
                         answerSubmitted={answerSubmitted}
                         onSubmitAnswer={handleSubmitAnswer} />;
-                correctAnswer = questionSpecificData.correct_answer;
+                correctAnswer = questionSpecificData.correct_sentence.target_language_sentence;
                 break;
             default:
                 display = <div>{`Invalid question type - ${data.question_type}`}</div>;
@@ -307,7 +310,7 @@ function QuestionDisplay({ questionUrl, answerSubmitted, onSubmitAnswer, onNextQ
             {(questionBaseError || questionSpecificError) && (
                 <div>{`There was a problem fetching the question data - ${questionBaseError} ${questionSpecificError}`}</div>
             )}
-            {display}
+            {(questionBaseData && questionSpecificData) && display}
             {answerSubmitted && <FeedbackMessage
                 correct={answeredCorrectly}
                 correctAnswer={correctAnswer}

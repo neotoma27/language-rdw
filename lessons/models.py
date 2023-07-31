@@ -141,18 +141,28 @@ class VocabMCQuestion(Question):
     incorrect_answer_options = models.ManyToManyField(
         VocabWord,
         related_name="question_this_is_incorrect_option_for",
-        help_text='Question should have three options for incorrect answers')
+        help_text='Question should have three Incorrect Answer Options')
     vocab_word = models.ForeignKey(VocabWord, on_delete=models.CASCADE, related_name="question_this_is_correct_answer_for")
     def __str__(self):
         return str(self.vocab_word)
+    
+
+class Sentence(models.Model):
+    target_language_sentence = models.CharField(max_length=800)
+    native_language_sentence = models.CharField(max_length=800)
+    subjects = models.ManyToManyField(Subject)
+    def __str__(self):
+        return self.target_language_sentence
 
 
 class SentenceMCQuestion(Question):
-    correct_answer = models.CharField(max_length=700)
-    incorrect_answer_options = models.JSONField(validators=[validate_mc_JSON])
-    native_language_sentence = models.CharField(max_length=700)
+    incorrect_answer_options = models.ManyToManyField(
+        Sentence,
+        related_name="question_this_is_incorrect_option_for",
+        help_text='Question should have three Incorrect Answer Options')
+    correct_sentence = models.ForeignKey(Sentence, on_delete=models.CASCADE, related_name="question_this_is_correct_answer_for")
     def __str__(self):
-        return self.native_language_sentence
+        return str(self.correct_sentence)
 
 
 class WriteSentenceQuestion(Question):

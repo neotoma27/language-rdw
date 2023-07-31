@@ -8,6 +8,7 @@ router.register(r'questions', views.QuestionViewSet)
 router.register(r'subjects', views.SubjectViewSet)
 router.register(r'vocabwords', views.VocabWordViewSet)
 router.register(r'vocabmcquestions', views.VocabMCQuestionViewSet)
+router.register(r'sentences', views.SentenceViewSet)
 router.register(r'sentencemcquestions', views.SentenceMCQuestionViewSet)
 router.register(r'writesentencequestions', views.WriteSentenceQuestionViewSet)
 

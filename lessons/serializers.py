@@ -1,15 +1,7 @@
 from rest_framework import serializers
-from lessons.models import (Subject, Question, Lesson, VocabWord, VocabMCQuestion, SentenceMCQuestion, WriteSentenceQuestion, TranslatePickWordsQuestion,
-    PairsQuestion)
+from lessons.models import (Subject, Question, Lesson, VocabWord, VocabMCQuestion, Sentence, SentenceMCQuestion,
+                            WriteSentenceQuestion, TranslatePickWordsQuestion, PairsQuestion)
 
-
-# class ChildQuestionRelatedField(serializers.RelatedField):
-#     """
-#     A custom field to use for the `child_question` generic relationship.
-#     """
-
-#     def to_representation(self, value):
-#         return value.url
 
 class SubjectSerializer(serializers.HyperlinkedModelSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name="subject-detail")
@@ -41,7 +33,7 @@ class VocabWordSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = VocabWord
-        fields = ['url', 'id', 'target_language_word', 'native_language_word', 'subjects', 'subjects']
+        fields = ['url', 'id', 'target_language_word', 'native_language_word', 'subjects']
 
 
 class VocabMCQuestionSerializer(serializers.ModelSerializer):
@@ -53,10 +45,22 @@ class VocabMCQuestionSerializer(serializers.ModelSerializer):
         fields = ['url', 'id', 'incorrect_answer_options', 'vocab_word']
 
 
-class SentenceMCQuestionSerializer(serializers.HyperlinkedModelSerializer):
+class SentenceSerializer(serializers.HyperlinkedModelSerializer):
+    subjects = serializers.HyperlinkedRelatedField(
+        many=True, view_name='subject-detail', queryset=Subject.objects.all())
+
     class Meta:
-        model=SentenceMCQuestion
-        fields = ['url', 'id', 'native_language_sentence', 'correct_answer', 'incorrect_answer_options']
+        model = Sentence
+        fields = ['url', 'id', 'target_language_sentence', 'native_language_sentence', 'subjects']
+
+
+class SentenceMCQuestionSerializer(serializers.ModelSerializer):
+    incorrect_answer_options = SentenceSerializer(many=True)
+    correct_sentence = SentenceSerializer(many=False)
+    
+    class Meta:
+        model = SentenceMCQuestion
+        fields = ['url', 'id', 'incorrect_answer_options', 'correct_sentence']
 
 
 class WriteSentenceQuestionSerializer(serializers.HyperlinkedModelSerializer):
