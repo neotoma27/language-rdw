@@ -164,6 +164,20 @@ function FeedbackMessage({ correct, correctAnswer, onContinue }) {
     return display;
 }
 
+function LessonCompleteScreen({ onEndLesson }) {
+    function handleEndLesson() {
+        onEndLesson();
+    }
+
+    return (
+        <div>
+            <h1>Lesson Complete!</h1>
+            <button onClick={handleEndLesson}>CONTINUE</button>
+        </div>
+    );
+}
+
+
 function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
     const [userChoice, setUserChoice] = useState(null);
     const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
@@ -331,30 +345,38 @@ function LessonDisplay({ lessonId, onNavigationSelect }) {
         setQuestionNumber(questionNumber + 1);
         setAnswerSubmitted(false);
     }
-    // function handleQuitLesson() {
+    function handleEndLesson() {
+        onNavigationSelect('menu', 'lesson select');
+    }
 
-    // }
+    const { data, loading, error } = useData(`api/lessons/${lessonId}.json`);
+    let display;
+    if (data && questionNumber > data.questions.length) {
+        display =
+            <LessonCompleteScreen
+                onEndLesson={handleEndLesson} />;
+    }
+    else {
+        display =
+            <div>
+                {loading && <div>Loading Lesson</div>}
+                {error && (
+                    <div>{`There was a problem fetching the lesson data - ${error}`}</div>
+                )}
+                {data &&
+                    <div>
+                        <h1>{`Question ${questionNumber} of ${data.questions.length}`}</h1>
+                        <QuestionDisplay
+                            questionUrl={data.questions[questionNumber - 1]}
+                            answerSubmitted={answerSubmitted}
+                            onSubmitAnswer={handleSubmitAnswer}
+                            onNextQuestion={handleNextQuestion} />
+                    </div>
+                }
+            </div>;
+    }
 
-    const { data, loading, error } = useData('api/lessons/1.json');
-
-    return (
-        <div>
-            {loading && <div>Loading Lesson</div>}
-            {error && (
-                <div>{`There was a problem fetching the lesson data - ${error}`}</div>
-            )}
-            {data &&
-                <div>
-                    <h1>{`Question ${questionNumber} of ${data.questions.length}`}</h1>
-                    <QuestionDisplay
-                        questionUrl={data.questions[questionNumber - 1]}
-                        answerSubmitted={answerSubmitted}
-                        onSubmitAnswer={handleSubmitAnswer}
-                        onNextQuestion={handleNextQuestion} />
-                </div>
-            }
-        </div>
-    );
+    return display;
 }
 
 function LessonChoiceRow({ id, lessonName, onNavigationSelect }) {

@@ -2,5 +2,8 @@
   "devDependencies": {
     "@babel/core": "^7.22.9",
     "@babel/preset-env": "^7.22.9"
+  },
+  "dependencies": {
+    "firebase": "^8.6.8"
   }
 }

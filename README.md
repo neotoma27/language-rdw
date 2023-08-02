@@ -1,4 +1,16 @@
+# Setup
+## Download Sample Database
+Download a sample database from https://drive.google.com/file/d/1PsA_Wojhguc6id_chEiTUYPmvCVXjohc/view?usp=drive_link and put it in the main project folder (language-rdw, not language_rdw).
+# Running the App
+Start the server:
+\$ python3 manage.py runserver
+Go to local domain in a web browser.
 # Using the Admin Site
+## Create Admin User
+Run the following to create an admin user:
+\$ python3 manage.py createsuperuser
+Enter a username, password, and email.
+Open /admin/ on your local domain in a web browser, and log in.
 ## Subjects
 First, create at least one Subject.
 ## Questions

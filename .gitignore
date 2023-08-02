@@ -375,3 +375,11 @@ sketch
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/django,linux,react,visualstudiocode,python,node
+### Firebase ###
+.idea
+**/node_modules/*
+**/.firebaserc
+
+### Firebase Patch ###
+.runtimeconfig.json
+.firebase/
