@@ -1,6 +1,5 @@
 # Setup
-## Download Sample Database
-Download a sample database from https://drive.google.com/file/d/1PsA_Wojhguc6id_chEiTUYPmvCVXjohc/view?usp=drive_link and put it in the main project folder (language-rdw, not language_rdw).
+Project should come with a sample database that already has some questions and lessons.
 # Running the App
 Start the server:
 \$ python3 manage.py runserver

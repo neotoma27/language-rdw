@@ -7,8 +7,8 @@
 *.pyc
 __pycache__/
 local_settings.py
-db.sqlite3
-db.sqlite3-journal
+# db.sqlite3
+# db.sqlite3-journal
 media
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/
@@ -375,11 +375,3 @@ sketch
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/django,linux,react,visualstudiocode,python,node
-### Firebase ###
-.idea
-**/node_modules/*
-**/.firebaserc
-
-### Firebase Patch ###
-.runtimeconfig.json
-.firebase/
