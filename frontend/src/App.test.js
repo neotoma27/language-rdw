@@ -7,7 +7,7 @@
 //     );
 //     let tree = component.toJSON();
 //     expect(tree).toMatchSnapshot();
-  
+
 //     // manually trigger the callback
 //     renderer.act(() => {
 //       tree.props.onMouseEnter();
@@ -15,7 +15,7 @@
 //     // re-rendering
 //     tree = component.toJSON();
 //     expect(tree).toMatchSnapshot();
-  
+
 //     // manually trigger the callback
 //     renderer.act(() => {
 //       tree.props.onMouseLeave();
@@ -24,5 +24,3 @@
 //     tree = component.toJSON();
 //     expect(tree).toMatchSnapshot();
 //   });
-  
-  
