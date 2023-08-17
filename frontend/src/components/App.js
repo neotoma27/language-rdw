@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import LessonCompleteGoose from '../assets/images/lesson-complete-goose.png'
 
 function replaceItemInArray(items, replaceItem, replaceIndex) {
   return items.map((item) => {
@@ -186,10 +187,15 @@ function LessonCompleteScreen({ onEndLesson }) {
 
   return (
     <div>
-      <h1>Lesson Complete!</h1>
-      <button onClick={handleEndLesson}>CONTINUE</button>
+        <div className="object-contain h-30 w-30">
+            <img src={LessonCompleteGoose} alt="Digital drawing of an ice-skating cartoon goose, wearing a yellow helmet, red scarf with yellow polka-dots, turquoise sweater, red pants, and brown ice skates." />
+        </div>
+        <div>
+            Lesson complete! Great work!
+        </div>
+        <button className="bg-teal-400 text-white w-80 rounded-lg" onClick={handleEndLesson}>CONTINUE</button>
     </div>
-  );
+);
 }
 
 function VocabMCQuestionDisplay({
@@ -433,7 +439,7 @@ function LessonChoiceRow({ id, lessonName, onNavigationSelect }) {
     onNavigationSelect(id);
   }
 
-  return <button className="bg-lime-400 text-white w-80 rounded-lg" onClick={handleClickLesson}>{lessonName}</button>;
+  return <button className="bg-teal-400 text-white w-80 rounded-lg" onClick={handleClickLesson}>{lessonName}</button>;
 }
 
 function MenuDisplay({ onNavigationSelect }) {
