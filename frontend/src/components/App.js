@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import LessonCompleteGoose from '../assets/images/lesson-complete-goose.png'
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
 
 function replaceItemInArray(items, replaceItem, replaceIndex) {
 	return items.map((item) => {
@@ -162,18 +163,24 @@ function FeedbackMessage({ correct, correctAnswer, onContinue }) {
 	let display = <div>Feedback Message Error</div>;
 	if (correct) {
 		display = (
-			<div>
-				<div>You are correct</div>
-				<button onClick={handleContinue}>CONTINUE</button>
+			<div className="flex flex-col w-[22rem] px-2 py-4 mt-2 bg-lime-100 border-t-2 border-green-600">
+                <div className="flex flex-row">
+                    <CheckCircleIcon className="w-7 h-7 fill-green-600 stroke-transparent stroke-2" />
+                    <a className="font-sans text-lg font-medium text-green-600 ml-2 bg-inherit">Nice job!</a>
+                </div>
+                <button className="self-center my-2 w-[19rem] h-12 font-sans text-base font-medium text-white uppercase bg-green-500 rounded-lg" onClick={handleContinue}>CONTINUE</button>
 			</div>
 		);
 	} else {
 		display = (
-			<div>
-				<div>Sorry, incorrect</div>
-				<div>Correct solution:</div>
-				<div>{correctAnswer}</div>
-				<button onClick={handleContinue}>CONTINUE</button>
+			<div className="flex flex-col w-[22rem] px-2 py-4 mt-2 bg-red-100 border-t-2 border-red-600">
+                <div className="flex flex-row">
+                    <XCircleIcon className="w-7 h-7 fill-red-600 stroke-transparent stroke-2" />
+                    <a className="font-sans text-lg font-medium text-red-600 ml-2 bg-inherit">Incorrect</a>
+                </div>
+				<div className="font-sans text-base font-medium text-red-600 bg-inherit">Correct solution:</div>
+				<div className="font-sans text-base text-red-600 bg-inherit">{correctAnswer}</div>
+				<button className="self-center my-2 w-[19rem] h-12 font-sans text-base font-medium text-white uppercase bg-red-500 rounded-lg" onClick={handleContinue}>GOT IT</button>
 			</div>
 		);
 	}
@@ -201,20 +208,47 @@ function LessonCompleteScreen({ onEndLesson }) {
 );
 }
 
-function VocabMCQuestionDisplay({
-	questionData,
-	answerSubmitted,
-	onSubmitAnswer,
-}) {
+function ChoiceButton({ choice, index, selected, onClick }) {
+    function handleClick() {
+        onClick(index);
+    }
+
+    return (
+        selected ?    
+            <button key={choice} className="py-2 mx-4 w-80 text-sky-400 bg-sky-200 border-solid border-2 border-sky-400 rounded-lg shadow-lg" onClick={handleClick}>{choice}</button> :
+            <button key={choice} className="py-2 mx-4 w-80 border-solid border border-gray-400 rounded-lg shadow-lg" onClick={handleClick}>{choice}</button>
+    );
+}
+
+function AnswerSubmitButton({ answerSubmitted, choiceSelected, onSubmit }) {
+	let display = null;
+	if (!answerSubmitted) {
+		display =
+            <button
+                disabled={!choiceSelected}
+                className="mt-2 bg-green-500 py-5 w-96 text-white rounded disabled:bg-gray-300 disabled:text-gray-600"
+                onClick={onSubmit}>
+                    CHECK
+            </button>;
+	}
+	return display;
+}
+
+function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
 	const [userChoice, setUserChoice] = useState(null);
 	const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
 
-	function handleInputChange(e) {
-		setUserChoice(parseInt(e.target.value, 10));
+	function handleInputChange(index) {
+		// setUserChoice(parseInt(e.target.value, 10));
+        if (index === userChoice) {
+            setUserChoice(null);
+        }
+        else {
+            setUserChoice(index);
+        }
 	}
 
-	function handleSubmit(e) {
-		e.preventDefault();
+	function handleSubmit() {
 		onSubmitAnswer(userChoice === optionsOrder.correct);
 	}
 
@@ -228,74 +262,43 @@ function VocabMCQuestionDisplay({
 
 	return (
 		<div>
-			<form onSubmit={handleSubmit}>
-				<section>
-					<div>
-						Which one means {questionData.vocab_word.native_language_word}?
-					</div>
-					<fieldset>
-						<legend>Select</legend>
-						<div
-                            // className="flex flex-col"
-                        >
-							{answerOptions.map((choice, choiceIndex) => (
-								<div
-                                    // className="py-2 w-80 h-20"
-                                    key={choice}>
-                                    <label
-                                        className="w-80 border-solid border border-gray-400 shadow-lg checked:text-sky-400 checked:bg-sky-200 checked:border-2 checked:border-sky-400"
-                                        htmlFor={choice}>
-                                        {choice}
-                                    </label>
-                                    <input
-                                        className="position-fixed w-0 opacity-0"
-                                        id={choice}
-                                        name="choice"
-                                        type="radio"
-                                        value={choiceIndex}
-                                        checked={choiceIndex === userChoice}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-							))}
-						</div>
-					</fieldset>
-				</section>
-				{!answerSubmitted && <button type="submit">CHECK</button>}
-			</form>
+            <div className="font-sans text-lg font-bold">
+                Which one means "{questionData.vocab_word.native_language_word}"?
+            </div>
+            <div className="flex flex-col gap-1">
+                {answerOptions.map((choice, choiceIndex) => (
+                    <ChoiceButton
+                        choice={choice}
+                        index={choiceIndex}
+                        selected={choiceIndex === userChoice}
+                        onClick={handleInputChange}
+                    />
+                ))}
+            </div>
+            <AnswerSubmitButton
+                answerSubmitted={answerSubmitted}
+                choiceSelected={userChoice !== null}
+                onSubmit={handleSubmit}
+            />
 		</div>
 	);
 }
 
-function AnswerSubmitButton({ answerSubmitted, choiceSelected }) {
-	let display = null;
-	if (!answerSubmitted) {
-		display =
-			<div>
-				<button
-					disabled={!choiceSelected}
-					className="bg-green-500 py-5 w-96 text-white rounded disabled:bg-gray-300 disabled:text-gray-600"
-					type="submit">
-						CHECK
-				</button>
-			</div>;
-	}
-	return display;
-}
-
-function SentenceMCQuestionDisplay({
-	questionData,
-	answerSubmitted,
-	onSubmitAnswer,
-}) {
+function SentenceMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer }) {
 	const [userChoice, setUserChoice] = useState(null);
 	const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
 
-	function handleInputChange(e) {
-		setUserChoice(parseInt(e.target.value, 10));
+	function handleInputChange(index) {
+		// setUserChoice(parseInt(e.target.value, 10));
+        if (index === userChoice) {
+            setUserChoice(null);
+        }
+        else {
+            setUserChoice(index);
+        }
 	}
-	function handleSubmit(e) {
-		e.preventDefault();
+
+	function handleSubmit() {
 		onSubmitAnswer(userChoice === optionsOrder.correct);
 	}
 
@@ -309,39 +312,88 @@ function SentenceMCQuestionDisplay({
 
 	return (
 		<div>
-			<form onSubmit={handleSubmit}>
-				<section>
-					<div className="py-2 text-lg font-bold">Select the correct translation</div>
-					<div className="pb-6">{questionData.correct_sentence.native_language_sentence}</div>
-					<fieldset>
-						<legend>Select</legend>
-						<ul>
-							{answerOptions.map((choice, choiceIndex) => (
-								<li key={choice}>
-									<label>
-										{choice}
-										<input
-											className="bg-transparent checked:bg-sky-200 py-2 w-96 border border-gray-400 checked:border-sky-400 rounded shadow-md"
-											type="radio"
-											name="choice"
-											value={choiceIndex}
-											checked={choiceIndex === userChoice}
-											onChange={handleInputChange}
-										/>
-									</label>
-								</li>
-							))}
-						</ul>
-					</fieldset>
-				</section>
-				<AnswerSubmitButton
-					answerSubmitted={answerSubmitted}
-					choiceSelected={userChoice !== null}
-				/>
-			</form>
+            <div className="py-2 text-lg font-bold">Select the correct translation</div>
+            <div className="pb-6">{questionData.correct_sentence.native_language_sentence}</div>
+            <div
+                className="flex flex-col gap-1"
+            >
+                {answerOptions.map((choice, choiceIndex) => (
+                    <ChoiceButton
+                        choice={choice}
+                        index={choiceIndex}
+                        selected={choiceIndex === userChoice}
+                        onClick={handleInputChange}
+                    />
+                ))}
+            </div>
+            <AnswerSubmitButton
+                answerSubmitted={answerSubmitted}
+                choiceSelected={userChoice !== null}
+                onSubmit={handleSubmit}
+            />
 		</div>
 	);
 }
+
+// function SentenceMCQuestionDisplay({
+// 	questionData,
+// 	answerSubmitted,
+// 	onSubmitAnswer,
+// }) {
+// 	const [userChoice, setUserChoice] = useState(null);
+// 	const [optionsOrder, setOptionsOrder] = useState(shuffleOrder(4)); //object with 1 correct and 3 rest
+
+// 	function handleInputChange(e) {
+// 		setUserChoice(parseInt(e.target.value, 10));
+// 	}
+// 	function handleSubmit(e) {
+// 		e.preventDefault();
+// 		onSubmitAnswer(userChoice === optionsOrder.correct);
+// 	}
+
+	// const answerOptions = orderOptions(
+	// 	optionsOrder,
+	// 	questionData.correct_sentence.target_language_sentence,
+	// 	questionData.incorrect_answer_options.map(
+	// 		(option) => option.target_language_sentence,
+	// 	),
+	// );
+
+// 	return (
+// 		<div>
+// 			<form onSubmit={handleSubmit}>
+// 				<section>
+// 					<div className="py-2 text-lg font-bold">Select the correct translation</div>
+// 					<div className="pb-6">{questionData.correct_sentence.native_language_sentence}</div>
+// 					<fieldset>
+// 						<legend>Select</legend>
+// 						<ul>
+// 							{answerOptions.map((choice, choiceIndex) => (
+// 								<li key={choice}>
+// 									<label>
+// 										{choice}
+// 										<input
+// 											className="bg-transparent checked:bg-sky-200 py-2 w-96 border border-gray-400 checked:border-sky-400 rounded shadow-md"
+// 											type="radio"
+// 											name="choice"
+// 											value={choiceIndex}
+// 											checked={choiceIndex === userChoice}
+// 											onChange={handleInputChange}
+// 										/>
+// 									</label>
+// 								</li>
+// 							))}
+// 						</ul>
+// 					</fieldset>
+// 				</section>
+// 				<AnswerSubmitButton
+// 					answerSubmitted={answerSubmitted}
+// 					choiceSelected={userChoice !== null}
+// 				/>
+// 			</form>
+// 		</div>
+// 	);
+// }
 
 function QuestionDisplay({
 	questionUrl,
@@ -470,7 +522,7 @@ function LessonChoiceRow({ id, lessonName, onNavigationSelect }) {
 		onNavigationSelect(id);
 	}
 
-	return <button className="bg-teal-500 text-white w-80 rounded-lg" onClick={handleClickLesson}>{lessonName}</button>;
+	return <button className="bg-teal-500 text-white font-semibold w-80 h-9 rounded-lg" onClick={handleClickLesson}>{lessonName}</button>;
 }
 
 function MenuDisplay({ onNavigationSelect }) {
@@ -481,7 +533,7 @@ function MenuDisplay({ onNavigationSelect }) {
 	const { data, loading, error } = useData("api/lessons.json");
 	return (
 		<div>
-			<h1 className="my-3 w-80 text-center">Lesson Select Menu</h1>
+			<h1 className="my-3 w-80 font-bold text-center">Lesson Select Menu</h1>
 			{loading && <div>Loading lessons list</div>}
 			{error && (
 				<div>{`There was a problem fetching the lessons data - ${error}`}</div>
