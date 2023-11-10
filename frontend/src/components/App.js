@@ -22,7 +22,6 @@ function useData(url) {
 		async function startFetching() {
 			setLoading(true);
 			try {
-				// setError(null);
 				const response = await axios.get(url);
 				if (!ignore) {
 					setData(response.data);
@@ -215,8 +214,8 @@ function ChoiceButton({ choice, index, selected, onClick }) {
 
     return (
         selected ?    
-            <button key={choice} className="py-2 mx-4 w-80 text-sky-400 bg-sky-200 border-solid border-2 border-sky-400 rounded-lg shadow-lg" onClick={handleClick}>{choice}</button> :
-            <button key={choice} className="py-2 mx-4 w-80 border-solid border border-gray-400 rounded-lg shadow-lg" onClick={handleClick}>{choice}</button>
+            <button className="py-2 mx-4 w-80 text-sky-400 bg-sky-200 border-solid border-2 border-sky-400 rounded-lg shadow-lg" onClick={handleClick}>{choice}</button> :
+            <button className="py-2 mx-4 w-80 border-solid border border-gray-400 rounded-lg shadow-lg" onClick={handleClick}>{choice}</button>
     );
 }
 
@@ -259,13 +258,22 @@ function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer 
 			(option) => option.target_language_word,
 		),
 	);
-
+    const optionsList = answerOptions.map((choice, choiceIndex) =>
+        <li key={choice}>
+            <ChoiceButton
+                choice={choice}
+                index={choiceIndex}
+                selected={choiceIndex === userChoice}
+                onClick={handleInputChange}
+            />
+        </li>
+    );
 	return (
 		<div>
             <div className="font-sans text-lg font-bold">
                 Which one means "{questionData.vocab_word.native_language_word}"?
             </div>
-            <div className="flex flex-col gap-1">
+            {/* <div className="flex flex-col gap-1">
                 {answerOptions.map((choice, choiceIndex) => (
                     <ChoiceButton
                         choice={choice}
@@ -274,7 +282,8 @@ function VocabMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnswer 
                         onClick={handleInputChange}
                     />
                 ))}
-            </div>
+            </div> */}
+            <ul role="list">{optionsList}</ul>
             <AnswerSubmitButton
                 answerSubmitted={answerSubmitted}
                 choiceSelected={userChoice !== null}
@@ -309,23 +318,22 @@ function SentenceMCQuestionDisplay({ questionData, answerSubmitted, onSubmitAnsw
 			(option) => option.target_language_sentence,
 		),
 	);
-
+    const optionsList = answerOptions.map((choice, choiceIndex) =>
+        <li key={choice}>
+            <ChoiceButton
+                choice={choice}
+                index={choiceIndex}
+                selected={choiceIndex === userChoice}
+                onClick={handleInputChange}
+            />
+        </li>
+    );
 	return (
 		<div>
             <div className="py-2 text-lg font-bold">Select the correct translation</div>
             <div className="pb-6">{questionData.correct_sentence.native_language_sentence}</div>
-            <div
-                className="flex flex-col gap-1"
-            >
-                {answerOptions.map((choice, choiceIndex) => (
-                    <ChoiceButton
-                        choice={choice}
-                        index={choiceIndex}
-                        selected={choiceIndex === userChoice}
-                        onClick={handleInputChange}
-                    />
-                ))}
-            </div>
+            {/* <div className="flex flex-col gap-1"> */}
+            <ul role="list">{optionsList}</ul>
             <AnswerSubmitButton
                 answerSubmitted={answerSubmitted}
                 choiceSelected={userChoice !== null}
