@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import LessonCompleteGoose from '../assets/images/lesson-complete-goose.png'
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
+// import SkatingGoose from '../skating-goose.png';
+import { CheckCircleIcon, TrophyIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 function replaceItemInArray(items, replaceItem, replaceIndex) {
 	return items.map((item) => {
@@ -193,16 +193,20 @@ function LessonCompleteScreen({ onEndLesson }) {
 
 	return (
 		<div>
-				<div className="object-contain h-30 w-30">
-						<img src={LessonCompleteGoose} alt="Digital drawing of an ice-skating cartoon goose, wearing a yellow helmet, red scarf with yellow polka-dots, turquoise sweater, red pants, and brown ice skates." />
-				</div>
-				<div>
-						Lesson complete! Great work!
-				</div>
-				<button className="bg-teal-400 text-white w-80 rounded-lg" onClick={handleEndLesson}>CONTINUE</button>
-				<div className="text-sm">
-						Illustration by <a href="https://icons8.com/illustrations/author/wsla8vwyVKgS">OlFi</a> from <a href="https://icons8.com/illustrations">Ouch!</a>
-				</div>
+            <div>
+                <TrophyIcon className="w-20 h-20 fill-white stroke-yellow-400 stroke-1" />
+            </div>
+            {/* <div className="object-contain h-30 w-30"> */}
+                {/* <img src={SkatingGoose}
+                    alt="Digital drawing of an ice-skating cartoon goose, wearing a yellow helmet, red scarf with yellow polka-dots, turquoise sweater, red pants, and brown ice skates." /> */}
+            {/* </div> */}
+            <div>
+                    Lesson complete! Great work!
+            </div>
+            <button className="bg-teal-400 text-white w-80 rounded-lg" onClick={handleEndLesson}>CONTINUE</button>
+            {/* <div className="text-sm">
+                    Illustration by <a href="https://icons8.com/illustrations/author/wsla8vwyVKgS">OlFi</a> from <a href="https://icons8.com/illustrations">Ouch!</a>
+            </div> */}
 		</div>
 );
 }
